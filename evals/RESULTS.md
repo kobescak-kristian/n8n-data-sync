@@ -33,4 +33,10 @@ previous entry | secondary metrics | cost.
   - `neg-1` (grader check): M04 sent again without the reset; the grader reported the miss (step 1
     result skipped_duplicate, expected created). Shows that a pass is not automatic.
   - Not run yet: R01-R05 (the runner needs the replay form password in `.env`). Cost: $0 (no AI step).
-
+- **2026-10-21 00:02-00:11 | DEVELOPMENT, not gated** | config v2 | workflow commit a07d777 (as pushed; later
+  commits changed no workflow) | visible set d4df6410... | `dev-2`: all visible cases except R01-R05 (62 of 67;
+  the replay cases wait for the replay password in `.env`) | runner exit 0 | 62 of 62 passed | hard-rule
+  breaks 0 | secret leaks 0 | real HubSpot errors 0 | no misses | median 2.4 s and worst
+  19.3 s from request to log row for synced orders; 5 retries (simulated faults);
+  168 HubSpot requests through the fault proxy | n8n exclusive slot 00:02-00:11
+  (n8n-usage.md) | cost $0.
