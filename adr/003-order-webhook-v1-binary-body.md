@@ -70,6 +70,21 @@ in the workflow.
   (README "going live" note).
 - The Code node that reads the bytes must come right after the webhook (the
   Crypto node drops the binary from its output).
+- Checker exception (owner decision 2026-10-21, "Yes to both.", after R2
+  finding 6). `tests/check_n8n_workflows.py` reports 4 items that are
+  accepted, with these reasons:
+  - The 2 HMAC-signed webhooks `Order in` (Entry) and `Summary in (test)`
+    (test copy only) show as "no authentication". WooCommerce cannot send an
+    auth header; the signature is checked in the workflow on the raw bytes
+    (this decision).
+  - The 2 sub-workflows `Q129 Core` and `Q129 HubSpot call` have no error
+    workflow of their own. They run only from Entry and Replay, whose error
+    workflow covers them. In n8n 2.43.7 a sub-workflow with its own error
+    workflow also fires it, so one crash would send 2 crash alerts (S04
+    expects one).
+  `python tests/check_workflows_gate.py` runs the checker and exits 0 only
+  when the findings are exactly these; it is the check before the frozen
+  commit.
 
 ## Review
 
