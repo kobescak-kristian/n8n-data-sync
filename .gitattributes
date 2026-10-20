@@ -1,0 +1,2 @@
+# Generated test cases: exact bytes (their SHA-256 is part of the gate)
+tests/cases/*.json -text
