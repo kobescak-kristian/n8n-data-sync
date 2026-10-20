@@ -22,4 +22,15 @@ previous entry | secondary metrics | cost.
 
 ## Entries
 
-No entries yet.
+- **2026-10-20 23:15-23:33 | DEVELOPMENT, not gated** | config v2 | workflow commit a07d777 (pushed to
+  local n8n 2.43.7 by `python workflows/build.py --push`) | visible set d4df6410... (generator 891c1d2) |
+  - `dry-1` (N01, A04; dry run, not a result): runner exit 0, 2 of 2 passed, 0 hard-rule breaks, 0 secret
+    leaks.
+  - `dev-1` (22 visible cases, one or more per kind except R: M02 M04 E03 U04 U06 D02 D06 F01 V04 A01 A03
+    A05 A06 T01 T03 T04 T05 T06 S01 S02 S04 S05): runner exit 0, 22 of 22 passed, 0 hard-rule breaks,
+    0 secret leaks, 0 real HubSpot errors; median 2.8 s and worst 19.7 s from request to log row for
+    synced orders; 4 retries (simulated faults); 65 HubSpot requests through the fault proxy.
+  - `neg-1` (grader check): M04 sent again without the reset; the grader reported the miss (step 1
+    result skipped_duplicate, expected created). Shows that a pass is not automatic.
+  - Not run yet: R01-R05 (the runner needs the replay form password in `.env`). Cost: $0 (no AI step).
+

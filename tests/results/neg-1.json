@@ -1,0 +1,40 @@
+{
+ "label": "neg-1",
+ "started": "2026-10-20T21:18:54.455Z",
+ "finished": "2026-10-20T21:19:01.310Z",
+ "workflow_commit": "a07d777",
+ "cases_run": 1,
+ "passed": 0,
+ "hard_rule_breaks": 0,
+ "cases": [
+  {
+   "id": "M04",
+   "kind": "M",
+   "set": "visible",
+   "simulated": false,
+   "pass": false,
+   "misses": [
+    {
+     "where": "step 1 result",
+     "rule": "miss",
+     "expected": [
+      "created"
+     ],
+     "actual": "skipped_duplicate"
+    }
+   ],
+   "seconds": 3.7,
+   "step_seconds": {
+    "1": 1.3
+   }
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 2.8,
+  "worst_seconds_sync": 19.7,
+  "retries": 4,
+  "hubspot_requests_via_proxy": 0
+ },
+ "secret_leaks": 0
+}
