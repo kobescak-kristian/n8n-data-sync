@@ -578,32 +578,44 @@ def chain(*names):
     return {a: {"main": [[{"node": b, "type": "main", "index": 0}]]} for a, b in zip(names, names[1:])}
 
 
+# Reads the raw body while the webhook's binary is this node's input (n8n keeps it in its binary store, so
+# only getBinaryDataBuffer on the own input works); passes the binary on for the Crypto node.
+READ_JS = r"""
+const item = $input.first();
+const raw = item.binary && item.binary.data ? await this.helpers.getBinaryDataBuffer(0, 'data') : Buffer.alloc(0);
+let parsed = 'not_json';
+try { const o = JSON.parse(raw.toString('utf8')); parsed = (o && typeof o === 'object' && !Array.isArray(o)) ? 'object' : 'not_object'; } catch (e) {}
+return [{ json: { headers: item.json.headers, raw_b64: raw.toString('base64'), bytes: raw.length, parsed }, binary: item.binary }];
+"""
+
 VERIFY_JS = r"""
 const it = $input.first().json;
 const got = String((it.headers || {})['x-wc-webhook-signature'] || '');
 const want = String(it.signature || '');
 let diff = got.length ^ want.length;
 for (let i = 0; i < Math.max(got.length, want.length); i++) diff |= (got.charCodeAt(i) || 0) ^ (want.charCodeAt(i) || 0);
-const raw = await this.helpers.getBinaryDataBuffer(0, 'data');
-return [{ json: { ok: got.length > 0 && diff === 0, computed: want, raw_b64: raw.toString('base64') } }];
+return [{ json: { ok: got.length > 0 && diff === 0, computed: want, raw_b64: it.raw_b64, parsed: it.parsed } }];
 """
 
 
 def sig_workflow(cred_id):
-    hook_node = node("Order in", "n8n-nodes-base.webhook", 2.1,
+    # Webhook v1 with "Binary File" on: n8n does not parse the body (webhook-helpers parseRequestBody returns
+    # early), so a signed body that is not JSON still reaches the workflow (v2 answers 422 itself). adr/003.
+    hook_node = node("Order in", "n8n-nodes-base.webhook", 1,
                      {"httpMethod": "POST", "path": "q129-probe-sig", "responseMode": "responseNode",
-                      "options": {"rawBody": True}}, 0,
+                      "options": {"binaryData": True, "binaryPropertyName": "data"}}, 0,
                      webhookId=str(uuid.uuid5(uuid.NAMESPACE_URL, "q129/probe-sig")))
+    read = node("Read raw body", "n8n-nodes-base.code", 2, {"jsCode": READ_JS}, 1)
     sign = node("Sign raw body", "n8n-nodes-base.crypto", 2,
                 {"action": "hmac", "type": "SHA256", "binaryData": True, "binaryPropertyName": "data",
-                 "dataPropertyName": "signature", "encoding": "base64"}, 1,
+                 "dataPropertyName": "signature", "encoding": "base64"}, 2,
                 cred={"crypto": {"id": cred_id, "name": CRYPTO_CRED}})
-    verify = node("Verify signature", "n8n-nodes-base.code", 2, {"jsCode": VERIFY_JS}, 2)
+    verify = node("Verify signature", "n8n-nodes-base.code", 2, {"jsCode": VERIFY_JS}, 3)
     answer = node("Answer", "n8n-nodes-base.respondToWebhook", 1.4,
                   {"respondWith": "json", "responseBody": "={{ JSON.stringify($json) }}",
-                   "options": {"responseCode": "={{ $json.ok ? 200 : 401 }}"}}, 3)
-    return {"name": N8N_PREFIX + "raw body signature", "nodes": [hook_node, sign, verify, answer],
-            "connections": chain("Order in", "Sign raw body", "Verify signature", "Answer"),
+                   "options": {"responseCode": "={{ $json.ok ? 200 : 401 }}"}}, 4)
+    return {"name": N8N_PREFIX + "raw body signature", "nodes": [hook_node, read, sign, verify, answer],
+            "connections": chain("Order in", "Read raw body", "Sign raw body", "Verify signature", "Answer"),
             "settings": {"executionOrder": "v1"}}
 
 
@@ -664,15 +676,17 @@ def check_signature(cred_id, tag_id, wids):
     hdr = {"Content-Type": "application/json", "X-WC-Webhook-Topic": "order.created"}
     fails = []
 
-    def expect(label, payload, headers, want):
+    def expect(label, payload, headers, want, parsed=None):
         s, b = hook("q129-probe-sig", payload, headers)
         raw_ok = isinstance(b, dict) and base64.b64decode(b.get("raw_b64") or "") == payload
-        line = f"{label}: HTTP {s}" + ("" if raw_ok else " (raw bytes DIFFER)")
-        if s != want or not raw_ok:
+        got_parsed = b.get("parsed") if isinstance(b, dict) else None
+        line = f"{label}: HTTP {s}" + ("" if raw_ok else " (raw bytes DIFFER)") + \
+            (f", parsed {got_parsed}" if parsed else "")
+        if s != want or not raw_ok or (parsed and got_parsed != parsed):
             fails.append(line)
         return line, b
 
-    good, b = expect("signed", body, dict(hdr, **{"X-WC-Webhook-Signature": wc_sign(body)}), 200)
+    good, b = expect("signed", body, dict(hdr, **{"X-WC-Webhook-Signature": wc_sign(body)}), 200, "object")
     same_secret = isinstance(b, dict) and b.get("computed") == wc_sign(body)
     if not same_secret:
         fails.append("n8n credential secret differs from Q129_WEBHOOK_SECRET in .env")
@@ -684,12 +698,14 @@ def check_signature(cred_id, tag_id, wids):
     lines.append(expect("no signature", body, hdr, 401)[0])
     notjson = b"this is not json \xc3\xa9"
     lines.append(expect("signed, not JSON", notjson, {"Content-Type": "application/json",
-                                                       "X-WC-Webhook-Signature": wc_sign(notjson)}, 200)[0])
+                                                       "X-WC-Webhook-Signature": wc_sign(notjson)}, 200,
+                        "not_json")[0])
     ping = b"webhook_id=12"
     lines.append(expect("ping body, form type", ping, {"Content-Type": "application/x-www-form-urlencoded",
                                                        "X-WC-Webhook-Signature": wc_sign(ping)}, 200)[0])
-    record("N-SIG raw-body signature check in an n8n webhook", not fails,
-           "; ".join(lines) + ("; n8n Crypto credential = .env secret" if same_secret else ""))
+    record("N-SIG raw-body signature check in an n8n webhook (v1, Binary File on)", not fails,
+           "; ".join(lines) + ("; n8n Crypto credential = .env secret" if same_secret else "") +
+           "; raw bytes read from the n8n binary store")
 
 
 def check_ledger(tag_id, wids, table_holder):
