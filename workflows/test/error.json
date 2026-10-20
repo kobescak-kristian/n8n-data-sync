@@ -1,0 +1,149 @@
+{
+ "name": "Q129 Error: crash alert",
+ "nodes": [
+  {
+   "id": "810c7e45-1c52-5655-9482-e03476338ca7",
+   "name": "Error in",
+   "type": "n8n-nodes-base.errorTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {}
+  },
+  {
+   "id": "a70c2ce3-0847-5b82-a5bb-d34a4a144287",
+   "name": "Crash state",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    240,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const e = $input.first().json || {};\nconst ex = e.execution || {};\nconst wf = e.workflow || {};\nconst msg = String((ex.error && ex.error.message) || 'unknown error').slice(0, 200);\nreturn [{ json: { request_id: '', alert: { type: 'crash', order: '', reason: '', row_id: '', execution_id: String(ex.id || ''),\n  text: `Crash in ${wf.name || 'a Q129 workflow'} (execution ${ex.id || '?'}): ${msg}`,\n  data: { execution_id: String(ex.id || ''), workflow: wf.name || '', last_node: ex.lastNodeExecuted || '' } } } }];\n"
+   }
+  },
+  {
+   "id": "00b2a386-e628-52f9-8b8e-fd72479447de",
+   "name": "Slack crash",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.3,
+   "position": [
+    480,
+    0
+   ],
+   "parameters": {
+    "authentication": "accessToken",
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "#data-sync-alerts"
+    },
+    "text": "={{ $json.alert.text }}",
+    "otherOptions": {
+     "includeLinkToWorkflow": false
+    }
+   },
+   "credentials": {
+    "slackApi": {
+     "id": "__CRED:slackApi__",
+     "name": "Slack n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput",
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 2000
+  },
+  {
+   "id": "c5ed3858-d8b4-51d2-8cd1-15dcaeced291",
+   "name": "Crash row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    720,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const S = $('Crash state').first().json;\nconst s = $input.first().json || {};\nconst a = S.alert;\nconst ts = s.ts || (s.message && s.message.ts) || '';\nreturn [{ json: { at: new Date().toISOString(), type: S.alert.type, order_number: a.order || '', reason: a.reason || '',\n  row_id: a.row_id || '', request_id: S.request_id || '', execution_id: String(a.execution_id || $execution.id), slack_ts: String(ts),\n  slack_error: ts ? '' : String((s.error && (s.error.message || s.error)) || 'no message ts').slice(0, 300),\n  text: a.text, data: a.data ? JSON.stringify(a.data) : '' } }];\n"
+   }
+  },
+  {
+   "id": "0ba2eb20-325f-5b03-909a-1e07819d649e",
+   "name": "Save crash",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    960,
+    0
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_alerts"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "onError": "continueRegularOutput"
+  }
+ ],
+ "connections": {
+  "Error in": {
+   "main": [
+    [
+     {
+      "node": "Crash state",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Crash state": {
+   "main": [
+    [
+     {
+      "node": "Slack crash",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Slack crash": {
+   "main": [
+    [
+     {
+      "node": "Crash row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Crash row": {
+   "main": [
+    [
+     {
+      "node": "Save crash",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ }
+}

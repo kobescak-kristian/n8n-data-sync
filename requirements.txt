@@ -1,0 +1,2 @@
+# Test tools use the Python standard library only (no third-party packages to pin).
+# Python 3.12; Node 24 for tests/test_sync_js.py.

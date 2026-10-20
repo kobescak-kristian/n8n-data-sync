@@ -1,0 +1,604 @@
+{
+ "name": "Q129 Summary: daily summary",
+ "nodes": [
+  {
+   "id": "bab21bf5-6030-5b52-92ae-3e9ce2c75476",
+   "name": "Summary in (test)",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "q129-test-summary",
+    "responseMode": "responseNode",
+    "options": {
+     "binaryData": true,
+     "binaryPropertyName": "data"
+    }
+   },
+   "webhookId": "7ef9fe83-ae0e-5ed5-84c9-eb8096ce54a5"
+  },
+  {
+   "id": "2b8bf7e0-2ca6-5bf8-99b4-5586e7a77c15",
+   "name": "Read request",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    240,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const item = $input.first();\nconst raw = item.binary && item.binary.data ? await this.helpers.getBinaryDataBuffer(0, 'data') : Buffer.alloc(0);\nconst h = item.json.headers || {};\nconst one = (v) => (Array.isArray(v) ? v[0] : v);\nreturn [{ json: {\n  bytes: raw.length,\n  text: raw.toString('utf8'),\n  has_sig: one(h['x-wc-webhook-signature']) !== undefined,\n  sig: String(one(h['x-wc-webhook-signature']) || ''),\n  topic: one(h['x-wc-webhook-topic']) === undefined ? null : String(one(h['x-wc-webhook-topic'])),\n  delivery_id: one(h['x-wc-webhook-delivery-id']) === undefined ? '' : String(one(h['x-wc-webhook-delivery-id'])),\n  request_id: String(one(h['x-q129-request-id']) || ''),\n  test_crash: true && one(h['x-q129-test-crash']) === 'yes',\n  received_ms: Date.now(),\n}, binary: item.binary }];\n"
+   }
+  },
+  {
+   "id": "7ce3c8c4-2202-5bca-9aa7-751f9a105c34",
+   "name": "Sign body",
+   "type": "n8n-nodes-base.crypto",
+   "typeVersion": 2,
+   "position": [
+    480,
+    0
+   ],
+   "parameters": {
+    "action": "hmac",
+    "type": "SHA256",
+    "binaryData": true,
+    "binaryPropertyName": "data",
+    "dataPropertyName": "signature",
+    "encoding": "base64"
+   },
+   "credentials": {
+    "crypto": {
+     "id": "__CRED:crypto__",
+     "name": "Crypto WooCommerce n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "e2d90233-614d-5bf0-9eb3-2c610d9cd1d3",
+   "name": "Summary gate",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    720,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const it = $input.first().json;\nconst eq = (a, b) => { let d = a.length ^ b.length; for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; };\nconst want = typeof it.signature === 'string' ? it.signature : '';\nlet ok = it.has_sig && !!want && eq(it.sig, want), body = {};\nif (ok) { try { body = JSON.parse(it.text); } catch (e) { ok = false; } }\nconst start = ok && typeof body.window_start === 'string' ? body.window_start : null;\nreturn [{ json: { ok: ok && !!start, window_start: start, request_id: String(body.request_id || it.request_id || ''), http: ok && start ? 200 : 401 } }];\n"
+   }
+  },
+  {
+   "id": "822fc05b-8d46-5ae9-932f-ca8cbf57fc54",
+   "name": "Signed?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    960,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "822fc05b-8d46-5ae9-932f-ca8cbf57fc54",
+       "leftValue": "={{ $json.ok === true }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "a63c5682-eda9-59ad-845d-9c0e4586361d",
+   "name": "Answer 200",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1080,
+    -170
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true }) }}",
+    "options": {
+     "responseCode": "={{ 200 }}"
+    }
+   }
+  },
+  {
+   "id": "61cfc64a-e950-5f5b-b5b1-6fedfa9687f2",
+   "name": "Answer 401",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1200,
+    170
+   ],
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: false }) }}",
+    "options": {
+     "responseCode": "={{ 401 }}"
+    }
+   }
+  },
+  {
+   "id": "f3ce231d-241a-5b31-8976-148aea227df3",
+   "name": "Window",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const g = $('Summary gate').first().json;\nreturn [{ json: { window_start: g.window_start, request_id: g.request_id } }];\n"
+   }
+  },
+  {
+   "id": "39998440-f6de-5f42-bc81-3aafc0ece963",
+   "name": "Log rows",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    1440,
+    0
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_log"
+    },
+    "returnAll": true
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "4ea51ecd-9abe-50f7-aa07-5265a43ffbaa",
+   "name": "Attention rows",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    1680,
+    0
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "returnAll": true
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "8f20c6d1-eb7b-537b-8fa1-227f55f7da0e",
+   "name": "Count",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1920,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const W = $('Window').first().json;\nconst end = new Date().toISOString();\nconst inWin = (t) => typeof t === 'string' && t >= W.window_start && t <= end;\nconst log = $('Log rows').all().map((i) => i.json).filter((j) => j && j.id !== undefined && inWin(j.at));\nconst rows = $('Attention rows').all().map((i) => i.json).filter((j) => j && j.id !== undefined && inWin(j.created_at));\nconst count = (r) => log.filter((j) => j.result === r).length;\nconst c = { synced: count('created'), updated: count('updated'), skipped_duplicate: count('skipped_duplicate'),\n  skipped_older: count('skipped_older'), needs_attention: rows.length, still_open: rows.filter((r) => r.state === 'open').length };\nconst text = `Data sync summary (${W.window_start} to ${end}): ${c.synced} new, ${c.updated} updated, `\n  + `${c.skipped_duplicate} duplicates skipped, ${c.skipped_older} older updates skipped, `\n  + `${c.needs_attention} need attention (${c.still_open} still open).`;\nreturn [{ json: { request_id: W.request_id, alert: { type: 'summary', order: '', reason: '', row_id: '', text, data: c },\n  over5: c.needs_attention > 5, counts: c } }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "c038652a-0877-54e5-a254-608bb3844b97",
+   "name": "Slack summary",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.3,
+   "position": [
+    2160,
+    0
+   ],
+   "parameters": {
+    "authentication": "accessToken",
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "#data-sync-alerts"
+    },
+    "text": "={{ $json.alert.text }}",
+    "otherOptions": {
+     "includeLinkToWorkflow": false
+    }
+   },
+   "credentials": {
+    "slackApi": {
+     "id": "__CRED:slackApi__",
+     "name": "Slack n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput",
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 2000
+  },
+  {
+   "id": "db18c9e1-4cde-5c04-9655-7c5cbf950809",
+   "name": "Summary row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2400,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const S = $('Count').first().json;\nconst s = $input.first().json || {};\nconst a = S.alert;\nconst ts = s.ts || (s.message && s.message.ts) || '';\nreturn [{ json: { at: new Date().toISOString(), type: S.alert.type, order_number: a.order || '', reason: a.reason || '',\n  row_id: a.row_id || '', request_id: S.request_id || '', execution_id: String(a.execution_id || $execution.id), slack_ts: String(ts),\n  slack_error: ts ? '' : String((s.error && (s.error.message || s.error)) || 'no message ts').slice(0, 300),\n  text: a.text, data: a.data ? JSON.stringify(a.data) : '' } }];\n"
+   }
+  },
+  {
+   "id": "f8e54c29-ca96-5624-91df-7a43b037be0c",
+   "name": "Save summary",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    2640,
+    0
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_alerts"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "921812db-dfd2-52e4-9a1b-46317347e62c",
+   "name": "Over 5?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2880,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "921812db-dfd2-52e4-9a1b-46317347e62c",
+       "leftValue": "={{ $('Count').first().json.over5 === true }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "708a03d2-aadf-54c0-a69c-70b010be2691",
+   "name": "Over 5 state",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3120,
+    170
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Count').first().json);\nS.alert = { type: 'over_5', order: '', reason: '', row_id: '', data: S.counts,\n  text: `Alert: ${S.counts.needs_attention} orders needed attention in this window (more than 5). Check the needs-attention list.` };\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "320ea7d3-d899-579f-b23e-a1278c761bf3",
+   "name": "Slack over 5",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.3,
+   "position": [
+    3360,
+    170
+   ],
+   "parameters": {
+    "authentication": "accessToken",
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "#data-sync-alerts"
+    },
+    "text": "={{ $json.alert.text }}",
+    "otherOptions": {
+     "includeLinkToWorkflow": false
+    }
+   },
+   "credentials": {
+    "slackApi": {
+     "id": "__CRED:slackApi__",
+     "name": "Slack n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput",
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 2000
+  },
+  {
+   "id": "d468f8f3-add1-5955-895e-9ab2f977c60f",
+   "name": "Over 5 row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3600,
+    170
+   ],
+   "parameters": {
+    "jsCode": "const S = $('Over 5 state').first().json;\nconst s = $input.first().json || {};\nconst a = S.alert;\nconst ts = s.ts || (s.message && s.message.ts) || '';\nreturn [{ json: { at: new Date().toISOString(), type: S.alert.type, order_number: a.order || '', reason: a.reason || '',\n  row_id: a.row_id || '', request_id: S.request_id || '', execution_id: String(a.execution_id || $execution.id), slack_ts: String(ts),\n  slack_error: ts ? '' : String((s.error && (s.error.message || s.error)) || 'no message ts').slice(0, 300),\n  text: a.text, data: a.data ? JSON.stringify(a.data) : '' } }];\n"
+   }
+  },
+  {
+   "id": "e198be99-f15b-5019-8d90-45d447c43ff5",
+   "name": "Save over 5",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    3840,
+    170
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_alerts"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "onError": "continueRegularOutput"
+  }
+ ],
+ "connections": {
+  "Summary in (test)": {
+   "main": [
+    [
+     {
+      "node": "Read request",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read request": {
+   "main": [
+    [
+     {
+      "node": "Sign body",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Sign body": {
+   "main": [
+    [
+     {
+      "node": "Summary gate",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Summary gate": {
+   "main": [
+    [
+     {
+      "node": "Signed?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Signed?": {
+   "main": [
+    [
+     {
+      "node": "Answer 200",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Answer 401",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Answer 200": {
+   "main": [
+    [
+     {
+      "node": "Window",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Window": {
+   "main": [
+    [
+     {
+      "node": "Log rows",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Log rows": {
+   "main": [
+    [
+     {
+      "node": "Attention rows",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Attention rows": {
+   "main": [
+    [
+     {
+      "node": "Count",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Count": {
+   "main": [
+    [
+     {
+      "node": "Slack summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Slack summary": {
+   "main": [
+    [
+     {
+      "node": "Summary row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Summary row": {
+   "main": [
+    [
+     {
+      "node": "Save summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Save summary": {
+   "main": [
+    [
+     {
+      "node": "Over 5?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Over 5?": {
+   "main": [
+    [
+     {
+      "node": "Over 5 state",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Over 5 state": {
+   "main": [
+    [
+     {
+      "node": "Slack over 5",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Slack over 5": {
+   "main": [
+    [
+     {
+      "node": "Over 5 row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Over 5 row": {
+   "main": [
+    [
+     {
+      "node": "Save over 5",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "errorWorkflow": "__WF:error__"
+ }
+}

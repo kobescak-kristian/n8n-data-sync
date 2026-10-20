@@ -1,0 +1,298 @@
+{
+ "name": "Q129 Replay: needs-attention row",
+ "nodes": [
+  {
+   "id": "d19825b7-ad37-5cd2-bc79-c539a08b8760",
+   "name": "Replay form",
+   "type": "n8n-nodes-base.formTrigger",
+   "typeVersion": 2.4,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "authentication": "basicAuth",
+    "path": "q129-replay",
+    "formTitle": "Replay a needs-attention row",
+    "formDescription": "Use this after a HubSpot outage. Orders that failed a field check are fixed in the shop.",
+    "formFields": {
+     "values": [
+      {
+       "fieldLabel": "Row ID",
+       "fieldName": "row_id",
+       "fieldType": "number",
+       "requiredField": true
+      },
+      {
+       "fieldType": "hiddenField",
+       "fieldName": "request_id"
+      }
+     ]
+    },
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "__CRED:httpBasicAuth__",
+     "name": "Replay n8n-data-sync"
+    }
+   },
+   "webhookId": "4f4a7cad-ef9f-5ea2-933a-8629af7d6c53"
+  },
+  {
+   "id": "d37478d6-dada-509d-b825-91e45620b8f5",
+   "name": "Replay request",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    240,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const f = $input.first().json;\nconst id = Number(f.row_id);\nreturn [{ json: { row_id: Number.isFinite(id) ? id : -1, request_id: String(f.request_id || '') || ('replay-' + $execution.id),\n  received_ms: Date.now() } }];\n"
+   }
+  },
+  {
+   "id": "a5442137-9bba-5ed9-8613-656d84b0de1c",
+   "name": "Find row",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    480,
+    0
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "id",
+       "condition": "eq",
+       "keyValue": "={{ $json.row_id }}"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "353d0041-5d2c-5d26-bdb7-581c4240fa85",
+   "name": "Replay decide",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    720,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const q = $('Replay request').first().json;\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst row = rows.find((r) => Number(r.id) === q.row_id) || null;\nlet go = false, reason = null;\nif (!row) reason = 'row_not_found';\nelse if (row.state !== 'open') reason = 'row_closed';\nelse go = true;\nreturn [{ json: { go, reason, row_id: q.row_id, request_id: q.request_id, received_ms: q.received_ms,\n  core: go ? { mode: 'replay', body_text: row.body, request_id: q.request_id, delivery_id: '', topic: '',\n    received_ms: q.received_ms, replay: { row_id: row.id, order: row.order_number || '', replays: Number(row.replays || 0) },\n    user: 'replay', force_crash: false } : null } }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "998afef6-6ba3-51f0-a647-54897e39a4ae",
+   "name": "Replay allowed?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    960,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "998afef6-6ba3-51f0-a647-54897e39a4ae",
+       "leftValue": "={{ $json.go === true }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "0e8d69fa-4552-5610-ac14-84420a39006d",
+   "name": "Core input",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    -170
+   ],
+   "parameters": {
+    "jsCode": "return [{ json: $json.core }];\n"
+   }
+  },
+  {
+   "id": "205f1137-334c-599a-8141-8155dd26d9ea",
+   "name": "Run core",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.4,
+   "position": [
+    1440,
+    -170
+   ],
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "mode": "id",
+     "value": "__WF:core__"
+    },
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   }
+  },
+  {
+   "id": "b4919ac3-43ba-5d35-b848-f4374c295849",
+   "name": "Refused log",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    170
+   ],
+   "parameters": {
+    "jsCode": "const d = $('Replay decide').first().json;\nreturn [{ json: { at: new Date().toISOString(), request_id: d.request_id, delivery_id: '', topic: '', mode: 'replay',\n  order_number: '', result: 'replay_refused', reasons: JSON.stringify([d.reason]), contact_id: '', deal_id: '',\n  attempts: '', seconds: Math.round((Date.now() - d.received_ms) / 100) / 10, row_id: String(d.row_id), user: 'replay' } }];\n"
+   }
+  },
+  {
+   "id": "54ee19a2-5695-5949-b4d3-5c04f40ae7b7",
+   "name": "Write refused log",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    1440,
+    170
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_log"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   }
+  }
+ ],
+ "connections": {
+  "Replay form": {
+   "main": [
+    [
+     {
+      "node": "Replay request",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Replay request": {
+   "main": [
+    [
+     {
+      "node": "Find row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find row": {
+   "main": [
+    [
+     {
+      "node": "Replay decide",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Replay decide": {
+   "main": [
+    [
+     {
+      "node": "Replay allowed?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Replay allowed?": {
+   "main": [
+    [
+     {
+      "node": "Core input",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Refused log",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Core input": {
+   "main": [
+    [
+     {
+      "node": "Run core",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Refused log": {
+   "main": [
+    [
+     {
+      "node": "Write refused log",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "errorWorkflow": "__WF:error__"
+ }
+}

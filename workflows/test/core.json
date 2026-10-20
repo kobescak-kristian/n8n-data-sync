@@ -1,0 +1,1687 @@
+{
+ "name": "Q129 Core: check and sync one order",
+ "nodes": [
+  {
+   "id": "87655b44-0a33-592c-938e-dfe5bde05386",
+   "name": "Start",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.3,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "inputSource": "passthrough"
+   }
+  },
+  {
+   "id": "9f71481f-5762-580a-a932-c72f7639ee22",
+   "name": "Check and clean",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    240,
+    0
+   ],
+   "parameters": {
+    "jsCode": "function checkAndClean(bodyText) {\n  const STAGE = { 'pending': 'Appointment Scheduled', 'on-hold': 'Qualified To Buy', 'processing': 'Closed Won',\n    'completed': 'Closed Won', 'cancelled': 'Closed Lost', 'refunded': 'Closed Lost', 'failed': 'Closed Lost',\n    'trash': 'Closed Lost' };\n  const CURRENCIES = ['EUR', 'GBP', 'USD'];\n  const EMAIL_RE = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;\n  const TOTAL_RE = /^[0-9]+(\\.[0-9]{1,2})?$/;\n  const ORDER_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/;\n  const DATE_RE = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})$/;\n  const isStr = (v) => typeof v === 'string';\n  const absent = (v) => v === undefined || v === null;\n  const trim = (s) => s.trim();\n  const collapse = (s) => s.trim().replace(/\\s+/g, ' ');\n  const validDate = (s) => {\n    const m = DATE_RE.exec(s);\n    if (!m) return false;\n    const [y, mo, d, h, mi, se] = m.slice(1).map(Number);\n    if (y < 1 || mo < 1 || mo > 12 || d < 1 || h > 23 || mi > 59 || se > 59) return false;\n    const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;\n    const dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];\n    return d <= dim;\n  };\n  const amount2 = (s) => {\n    const [i, f = ''] = s.split('.');\n    const ip = i.replace(/^0+(?=\\d)/, '');\n    return ip + '.' + (f + '00').slice(0, 2);\n  };\n  let p;\n  try { p = JSON.parse(bodyText); } catch (e) { p = undefined; }\n  if (!p || typeof p !== 'object' || Array.isArray(p)) {\n    return { reasons: ['not_json'], order_number: null, modified: null };\n  }\n  const reasons = [];\n  let badType = false;\n  const rec = { order_number: null, modified: null };\n\n  const num = p.number;\n  if (absent(num) || (isStr(num) && trim(num) === '')) reasons.push('missing_order_number');\n  else if (!isStr(num) || !ORDER_RE.test(trim(num))) reasons.push('invalid_order_number');\n  else rec.order_number = trim(num);\n\n  const billing = p.billing && typeof p.billing === 'object' && !Array.isArray(p.billing) ? p.billing : {};\n  const text = (key, names) => {\n    const v = billing[key];\n    if (absent(v)) return '';\n    if (!isStr(v)) { badType = true; return ''; }\n    return names ? collapse(v) : trim(v);\n  };\n\n  const email = billing.email;\n  let cleanEmail = null;\n  if (absent(email) || (isStr(email) && trim(email) === '')) reasons.push('missing_email');\n  else if (!isStr(email)) reasons.push('invalid_email');\n  else {\n    const e = trim(email).toLowerCase();\n    if (e.length > 254 || !EMAIL_RE.test(e)) reasons.push('invalid_email');\n    else cleanEmail = e;\n  }\n\n  const first = text('first_name', true), last = text('last_name', true);\n  if (first === '' && last === '') reasons.push('missing_name');\n\n  const total = p.total;\n  let amount = null;\n  if (absent(total) || (isStr(total) && trim(total) === '')) reasons.push('missing_total');\n  else if (!isStr(total) || !TOTAL_RE.test(trim(total))) reasons.push('invalid_total');\n  else amount = amount2(trim(total));\n\n  const listed = (key, allowed, field) => {\n    const v = p[key];\n    if (absent(v) || (isStr(v) && trim(v) === '')) { reasons.push('missing_' + field); return null; }\n    if (!isStr(v) || !allowed.includes(trim(v))) { reasons.push('invalid_' + field); return null; }\n    return trim(v);\n  };\n  const currency = listed('currency', CURRENCIES, 'currency');\n  const status = listed('status', Object.keys(STAGE), 'status');\n\n  const date = (key, field) => {\n    const v = p[key];\n    if (absent(v) || (isStr(v) && trim(v) === '')) { reasons.push('missing_' + field); return null; }\n    if (!isStr(v) || !validDate(trim(v))) { reasons.push('invalid_' + field); return null; }\n    return trim(v) + 'Z';\n  };\n  const orderDate = date('date_created_gmt', 'date_created');\n  rec.modified = date('date_modified_gmt', 'date_modified');\n\n  const phone = text('phone'), company = text('company');\n  const a1 = text('address_1'), a2 = text('address_2');\n  const city = text('city'), postcode = text('postcode'), country = text('country');\n  if (badType) reasons.push('invalid_text_field');\n  if (reasons.length) return { reasons, order_number: rec.order_number, modified: rec.modified };\n\n  const contact = { email: cleanEmail, first_name: first, last_name: last, phone, company,\n    address: [a1, a2].filter((x) => x).join(', '), city, postcode, country };\n  const deal = { order_number: rec.order_number, name: 'Order #' + rec.order_number, amount, currency,\n    stage: STAGE[status], order_date: orderDate, modified: rec.modified };\n  return { reasons: [], order_number: rec.order_number, modified: rec.modified, contact, deal };\n}\n\nconst S = Object.assign({}, $input.first().json);\nS.t0 = S.received_ms || Date.now();\nS.attempts = null;\nS.contact_id = ''; S.deal_id = '';\nconst r = checkAndClean(S.body_text);\nS.reasons = r.reasons;\nS.order_number = r.order_number;\nS.modified = r.modified;\nS.ok = r.reasons.length === 0;\nS.action = S.ok ? 'check_passed' : 'attention';\nS.result = S.ok ? null : 'needs_attention';\nif (S.ok) {\n  const sortKeys = (o) => Object.keys(o).sort().reduce((a, k) => { a[k] = o[k]; return a; }, {});\n  S.canonical = JSON.stringify([sortKeys(r.contact), sortKeys(r.deal)]);\n  S.email = r.contact.email;\n  const c = r.contact;\n  const props = { firstname: c.first_name, lastname: c.last_name, phone: c.phone, company: c.company,\n    address: c.address, city: c.city, zip: c.postcode, country: c.country };\n  S.contact_props = {};\n  for (const [k, v] of Object.entries(props)) if (v !== '') S.contact_props[k] = v;  // empty = not sent (CASES 3.6)\n  S.contact_props.sync_source = 'harbour-demo-shop';\n  const d = r.deal;\n  const STAGE_ID = { 'Appointment Scheduled': 'appointmentscheduled', 'Qualified To Buy': 'qualifiedtobuy',\n  'Closed Won': 'closedwon', 'Closed Lost': 'closedlost' };\n  // currency in shop_currency (adr/001); closedate in every deal upsert (adr/002)\n  S.deal_props = { dealname: d.name, amount: d.amount, shop_currency: d.currency, pipeline: 'default',\n    dealstage: STAGE_ID[d.stage], closedate: d.order_date, shop_modified_at: d.modified };\n}\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "5bcb1f42-6787-520b-ab0c-145a8d60a898",
+   "name": "Checks passed?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    480,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "5bcb1f42-6787-520b-ab0c-145a8d60a898",
+       "leftValue": "={{ $json.ok === true }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "c9c455da-2636-55da-b031-8206daf77d39",
+   "name": "Test crash switch",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    600,
+    -170
+   ],
+   "parameters": {
+    "jsCode": "if ($input.first().json.force_crash === true) {\n  throw new Error('Forced crash for the test (CASES.md 3.13)');\n}\nreturn $input.all();\n"
+   }
+  },
+  {
+   "id": "241c392c-013c-52d2-94d3-303b70d9d755",
+   "name": "Data hash",
+   "type": "n8n-nodes-base.crypto",
+   "typeVersion": 2,
+   "position": [
+    720,
+    -170
+   ],
+   "parameters": {
+    "action": "hash",
+    "type": "SHA256",
+    "value": "={{ $json.canonical }}",
+    "dataPropertyName": "data_hash",
+    "encoding": "hex"
+   }
+  },
+  {
+   "id": "4f499d96-1d04-5cc1-9b5f-7ce912d769fe",
+   "name": "Find ledger row",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    960,
+    -170
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_ledger"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $json.order_number }}"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "cee8fb0b-a0fd-577f-a141-d0f1f1bb88c4",
+   "name": "Decide",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    -170
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Data hash').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nS.ledger_found = !!led;\nif (!led) { S.action = 'write'; S.result = 'created'; }\nelse if (S.modified < led.version) { S.action = 'skip'; S.result = 'skipped_older'; }\nelse if (S.modified === led.version) {\n  if (led.data_hash !== S.data_hash) { S.action = 'attention'; S.result = 'needs_attention'; S.reasons = ['same_version_different_data']; }\n  else { S.action = 'skip'; S.result = 'skipped_duplicate'; }\n} else { S.action = 'write'; S.result = 'updated'; }\nreturn [{ json: S }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "fd703516-1279-5266-8b2a-4a4cee417a61",
+   "name": "Write?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1440,
+    -170
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "fd703516-1279-5266-8b2a-4a4cee417a61",
+       "leftValue": "={{ $json.action === 'write' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "a33d7882-8b93-595b-9c66-942cce2b30a0",
+   "name": "Contact request",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1680,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v3/objects/contacts/batch/upsert',\n  body: { inputs: [{ idProperty: 'email', id: S.email, properties: S.contact_props }] } } }];\n"
+   }
+  },
+  {
+   "id": "527a604e-354e-5ccb-afb4-247d11b955c5",
+   "name": "Write contact",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.4,
+   "position": [
+    1920,
+    -340
+   ],
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "mode": "id",
+     "value": "__WF:hubspot-call__"
+    },
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   }
+  },
+  {
+   "id": "d7acfbd9-f299-552e-9965-b2c69dff42c3",
+   "name": "After contact",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2160,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('contacts' !== 'link') S.attempts['contacts'] = r.attempts || 0;\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('contact_id') S['contact_id'] = String(res.id || '');\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "e9a9c715-3d05-540d-bff8-fb94e3e4f016",
+   "name": "Contact ok?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2400,
+    -340
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "e9a9c715-3d05-540d-bff8-fb94e3e4f016",
+       "leftValue": "={{ $json.action === 'write' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "6e1941c3-4100-5f66-92fe-3a47a3a65a27",
+   "name": "Deal request",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2640,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v3/objects/deals/batch/upsert',\n  body: { inputs: [{ idProperty: 'shop_order_id', id: S.order_number, properties: S.deal_props }] } } }];\n"
+   }
+  },
+  {
+   "id": "0bb26ebb-15c3-551b-8c5a-8ed5cf30b8b2",
+   "name": "Write deal",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.4,
+   "position": [
+    2880,
+    -340
+   ],
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "mode": "id",
+     "value": "__WF:hubspot-call__"
+    },
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   }
+  },
+  {
+   "id": "7dd256b9-fc81-50f2-8fa7-43354ec75c95",
+   "name": "After deal",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3120,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('After contact').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('deals' !== 'link') S.attempts['deals'] = r.attempts || 0;\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('deal_id') S['deal_id'] = String(res.id || '');\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "ba15b970-719c-57df-bbdd-9c013b06fe08",
+   "name": "Deal ok?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    3360,
+    -340
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "ba15b970-719c-57df-bbdd-9c013b06fe08",
+       "leftValue": "={{ $json.action === 'write' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "1b6308b0-6cf2-5e6a-a768-3e0a12c46332",
+   "name": "Link request",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3600,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v4/associations/deals/contacts/batch/associate/default',\n  body: { inputs: [{ from: { id: S.deal_id }, to: { id: S.contact_id } }] } } }];\n"
+   }
+  },
+  {
+   "id": "bfcb505b-4795-591a-a972-ec364fdb7541",
+   "name": "Write link",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.4,
+   "position": [
+    3840,
+    -340
+   ],
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "mode": "id",
+     "value": "__WF:hubspot-call__"
+    },
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   }
+  },
+  {
+   "id": "09ec678f-6a0e-5143-b19e-3bf541818664",
+   "name": "After link",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    4080,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('After deal').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('link' !== 'link') S.attempts['link'] = r.attempts || 0;\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('') S[''] = String(res.id || '');\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "eee7aa85-a1b1-53e6-8175-c138f3a8b9b6",
+   "name": "Link ok?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    4320,
+    -340
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "eee7aa85-a1b1-53e6-8175-c138f3a8b9b6",
+       "leftValue": "={{ $json.action === 'write' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "efbb99ed-7c64-55ef-bf7f-f723b71630b5",
+   "name": "Ledger row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    4560,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { order_number: S.order_number, version: S.modified, data_hash: S.data_hash, updated_at: new Date().toISOString() } }];\n"
+   }
+  },
+  {
+   "id": "2a525de4-5f36-5607-ac45-3636e3196c88",
+   "name": "Upsert ledger",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    4800,
+    -340
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "upsert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_ledger"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $json.order_number }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "order_number": "={{ $json.order_number }}",
+      "version": "={{ $json.version }}",
+      "data_hash": "={{ $json.data_hash }}",
+      "updated_at": "={{ $json.updated_at }}"
+     },
+     "matchingColumns": [],
+     "schema": [
+      {
+       "id": "order_number",
+       "displayName": "order_number",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "version",
+       "displayName": "version",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "data_hash",
+       "displayName": "data_hash",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "updated_at",
+       "displayName": "updated_at",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      }
+     ]
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "6eb917de-f6ac-53de-bf19-164f15227b00",
+   "name": "Find open rows",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    5040,
+    -340
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $('After link').first().json.order_number }}"
+      },
+      {
+       "keyName": "state",
+       "condition": "eq",
+       "keyValue": "open"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "c8496376-3509-59c8-ae8f-33496a260ca8",
+   "name": "Rows to close",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    5280,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = $('After link').first().json;\nconst open = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null && j.state === 'open');\nconst replayId = S.replay ? String(S.replay.row_id) : null;\nconst out = [];\nconst at = new Date().toISOString();\nfor (const r of open) {\n  const mine = replayId !== null && String(r.id) === replayId;\n  const bySync = S.action === 'write' && r.order_number === S.order_number && (!r.version || r.version <= S.modified);\n  if (mine || bySync) out.push({ json: { row_id: r.id, state: 'closed', closed_by: mine ? 'replay' : 'sync', closed_at: at, closed_request: S.request_id } });\n}\nif (!out.length) out.push({ json: { row_id: -1, state: 'closed', closed_by: '', closed_at: at, closed_request: '' } });\nreturn out;\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "4581701e-8f5c-5597-a94a-dce4369892e7",
+   "name": "Close rows",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    5520,
+    -340
+   ],
+   "parameters": {
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "id",
+       "condition": "eq",
+       "keyValue": "={{ $json.row_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "state": "={{ $json.state }}",
+      "closed_by": "={{ $json.closed_by }}",
+      "closed_at": "={{ $json.closed_at }}",
+      "closed_request": "={{ $json.closed_request }}"
+     },
+     "matchingColumns": [],
+     "schema": [
+      {
+       "id": "state",
+       "displayName": "state",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "closed_by",
+       "displayName": "closed_by",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "closed_at",
+       "displayName": "closed_at",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "closed_request",
+       "displayName": "closed_request",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      }
+     ]
+    },
+    "options": {}
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "id": "91c29c69-ac46-58e5-a4a1-438249aa000c",
+   "name": "Write done",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    5760,
+    -340
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('After link').first().json);\nconst closed = $('Rows to close').all().map((i) => i.json).filter((j) => j.row_id !== -1).map((j) => j.row_id);\nS.closed_rows = closed;\nreturn [{ json: S }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "c09be4ab-7a34-5c74-973a-44a0c362afac",
+   "name": "Skip?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1680,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c09be4ab-7a34-5c74-973a-44a0c362afac",
+       "leftValue": "={{ $json.action === 'skip' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "15ac2394-ac02-5636-ba24-51186fef14ca",
+   "name": "Find open rows (skip)",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    1920,
+    0
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $('Decide').first().json.order_number }}"
+      },
+      {
+       "keyName": "state",
+       "condition": "eq",
+       "keyValue": "open"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "24d87c96-2e51-5c26-82e0-e12ee9c328dc",
+   "name": "Rows to close (skip)",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2160,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const S = $('Decide').first().json;\nconst open = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null && j.state === 'open');\nconst replayId = S.replay ? String(S.replay.row_id) : null;\nconst out = [];\nconst at = new Date().toISOString();\nfor (const r of open) {\n  const mine = replayId !== null && String(r.id) === replayId;\n  const bySync = S.action === 'write' && r.order_number === S.order_number && (!r.version || r.version <= S.modified);\n  if (mine || bySync) out.push({ json: { row_id: r.id, state: 'closed', closed_by: mine ? 'replay' : 'sync', closed_at: at, closed_request: S.request_id } });\n}\nif (!out.length) out.push({ json: { row_id: -1, state: 'closed', closed_by: '', closed_at: at, closed_request: '' } });\nreturn out;\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "ef808878-272f-5960-92ac-f4f8e6e327ed",
+   "name": "Close rows (skip)",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    2400,
+    0
+   ],
+   "parameters": {
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "id",
+       "condition": "eq",
+       "keyValue": "={{ $json.row_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "state": "={{ $json.state }}",
+      "closed_by": "={{ $json.closed_by }}",
+      "closed_at": "={{ $json.closed_at }}",
+      "closed_request": "={{ $json.closed_request }}"
+     },
+     "matchingColumns": [],
+     "schema": [
+      {
+       "id": "state",
+       "displayName": "state",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "closed_by",
+       "displayName": "closed_by",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "closed_at",
+       "displayName": "closed_at",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      },
+      {
+       "id": "closed_request",
+       "displayName": "closed_request",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "string",
+       "canBeUsedToMatch": true
+      }
+     ]
+    },
+    "options": {}
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "id": "21d09d52-d1c1-5867-915b-dc1498acffb4",
+   "name": "Skip done",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2640,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst closed = $('Rows to close (skip)').all().map((i) => i.json).filter((j) => j.row_id !== -1).map((j) => j.row_id);\nS.closed_rows = closed;\nreturn [{ json: S }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "2f691e47-a85a-582d-a2b9-433917842508",
+   "name": "Attention",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2880,
+    340
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $input.first().json);\nS.result = 'needs_attention';\nS.main_reason = S.reasons[0];\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "b94b7ca9-9965-5a49-ba79-b75d2f62c61a",
+   "name": "Replay row?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    3120,
+    340
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "b94b7ca9-9965-5a49-ba79-b75d2f62c61a",
+       "leftValue": "={{ $json.mode === 'replay' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "0a7e5337-a15c-55b8-ad35-bcd451afedea",
+   "name": "New row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3360,
+    510
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { order_number: S.order_number || '', version: S.modified || '', reason: S.main_reason,\n  reasons: JSON.stringify(S.reasons), body: S.body_text, state: 'open', created_at: new Date().toISOString(),\n  request_id: S.request_id, delivery_id: S.delivery_id || '', replays: 0, closed_by: '', closed_at: '',\n  closed_request: '' } }];\n"
+   }
+  },
+  {
+   "id": "65d667c3-15f0-5e5a-97e0-6a154c9bacb0",
+   "name": "Insert row",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    3600,
+    510
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "facb6aee-c00e-541b-9d73-cd17ba816cfc",
+   "name": "Row alert",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3840,
+    510
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Attention').first().json);\nconst row = $input.first().json || {};\nS.row_id = row.id === undefined ? '' : String(row.id);\nS.alert = { type: 'attention', order: S.order_number || 'unknown', reason: S.main_reason, row_id: S.row_id };\nS.alert.text = `Order ${S.alert.order} needs attention: ${S.alert.reason} (row ${S.row_id}). Fix it in the shop, or press replay after a HubSpot outage.`;\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "47480d64-454a-525d-a310-1184bd7db2d2",
+   "name": "Replay count",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3360,
+    170
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { row_id: S.replay.row_id, replays: Number(S.replay.replays || 0) + 1 } }];\n"
+   }
+  },
+  {
+   "id": "bba4bdd8-8e1d-5557-b257-ddc1bf056208",
+   "name": "Update replay row",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    3600,
+    170
+   ],
+   "parameters": {
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_attention"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "id",
+       "condition": "eq",
+       "keyValue": "={{ $json.row_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "replays": "={{ $json.replays }}"
+     },
+     "matchingColumns": [],
+     "schema": [
+      {
+       "id": "replays",
+       "displayName": "replays",
+       "required": false,
+       "defaultMatch": false,
+       "display": true,
+       "type": "number",
+       "canBeUsedToMatch": true
+      }
+     ]
+    },
+    "options": {}
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "id": "ee68d3d4-4c3d-5182-b63f-3cc07fd08fb7",
+   "name": "Replay alert",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3840,
+    170
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Attention').first().json);\nS.row_id = String(S.replay.row_id);\nS.alert = { type: 'replay_failed', order: S.replay.order || 'unknown', reason: S.main_reason, row_id: S.row_id };\nS.alert.text = `Replay of row ${S.row_id} (order ${S.alert.order}) failed: ${S.alert.reason}. The row stays open.`;\nreturn [{ json: S }];\n"
+   }
+  },
+  {
+   "id": "f64cd1d0-7a3b-5d34-ad84-0f0fc92ced13",
+   "name": "Alert state",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    4080,
+    340
+   ],
+   "parameters": {
+    "jsCode": "return $input.all();\n"
+   }
+  },
+  {
+   "id": "508b686c-d232-584f-889c-b318c51870c5",
+   "name": "Slack alert",
+   "type": "n8n-nodes-base.slack",
+   "typeVersion": 2.3,
+   "position": [
+    4320,
+    340
+   ],
+   "parameters": {
+    "authentication": "accessToken",
+    "select": "channel",
+    "channelId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "#data-sync-alerts"
+    },
+    "text": "={{ $json.alert.text }}",
+    "otherOptions": {
+     "includeLinkToWorkflow": false
+    }
+   },
+   "credentials": {
+    "slackApi": {
+     "id": "__CRED:slackApi__",
+     "name": "Slack n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput",
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 2000
+  },
+  {
+   "id": "9430b883-81bd-5b5e-939e-224c588673c6",
+   "name": "Alert row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    4560,
+    340
+   ],
+   "parameters": {
+    "jsCode": "const S = $('Alert state').first().json;\nconst s = $input.first().json || {};\nconst a = S.alert;\nconst ts = s.ts || (s.message && s.message.ts) || '';\nreturn [{ json: { at: new Date().toISOString(), type: S.alert.type, order_number: a.order || '', reason: a.reason || '',\n  row_id: a.row_id || '', request_id: S.request_id || '', execution_id: String(a.execution_id || $execution.id), slack_ts: String(ts),\n  slack_error: ts ? '' : String((s.error && (s.error.message || s.error)) || 'no message ts').slice(0, 300),\n  text: a.text, data: a.data ? JSON.stringify(a.data) : '' } }];\n"
+   }
+  },
+  {
+   "id": "34b523b9-87ef-56ef-aba6-b64b80ef810e",
+   "name": "Save alert",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    4800,
+    340
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_alerts"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "8117d1a9-1876-5fac-8d26-396267c52db0",
+   "name": "Attention done",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    5040,
+    340
+   ],
+   "parameters": {
+    "jsCode": "return [{ json: $('Alert state').first().json }];\n"
+   }
+  },
+  {
+   "id": "8462178f-3244-598e-b9d9-aef19eb40efb",
+   "name": "Log row",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    6000,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const S = $input.first().json;\nconst rowId = S.mode === 'replay' ? String(S.replay.row_id) : (S.row_id || '');\nreturn [{ json: { at: new Date().toISOString(), request_id: S.request_id, delivery_id: S.delivery_id || '',\n  topic: S.topic || '', mode: S.mode, order_number: S.order_number || '', result: S.result,\n  reasons: JSON.stringify(S.result === 'needs_attention' ? S.reasons : []),\n  contact_id: S.contact_id || '', deal_id: S.deal_id || '', attempts: S.attempts ? JSON.stringify(S.attempts) : '',\n  seconds: Math.round((Date.now() - S.t0) / 100) / 10, row_id: rowId, user: S.user || '' } }];\n"
+   }
+  },
+  {
+   "id": "e41729f3-4db1-5d5f-b4f3-ec207dcacead",
+   "name": "Write log",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    6240,
+    0
+   ],
+   "parameters": {
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_log"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   }
+  }
+ ],
+ "connections": {
+  "Start": {
+   "main": [
+    [
+     {
+      "node": "Check and clean",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check and clean": {
+   "main": [
+    [
+     {
+      "node": "Checks passed?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Checks passed?": {
+   "main": [
+    [
+     {
+      "node": "Test crash switch",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Test crash switch": {
+   "main": [
+    [
+     {
+      "node": "Data hash",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Data hash": {
+   "main": [
+    [
+     {
+      "node": "Find ledger row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find ledger row": {
+   "main": [
+    [
+     {
+      "node": "Decide",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Decide": {
+   "main": [
+    [
+     {
+      "node": "Write?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write?": {
+   "main": [
+    [
+     {
+      "node": "Contact request",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Skip?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Contact request": {
+   "main": [
+    [
+     {
+      "node": "Write contact",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write contact": {
+   "main": [
+    [
+     {
+      "node": "After contact",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "After contact": {
+   "main": [
+    [
+     {
+      "node": "Contact ok?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Contact ok?": {
+   "main": [
+    [
+     {
+      "node": "Deal request",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Deal request": {
+   "main": [
+    [
+     {
+      "node": "Write deal",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write deal": {
+   "main": [
+    [
+     {
+      "node": "After deal",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "After deal": {
+   "main": [
+    [
+     {
+      "node": "Deal ok?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Deal ok?": {
+   "main": [
+    [
+     {
+      "node": "Link request",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Link request": {
+   "main": [
+    [
+     {
+      "node": "Write link",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write link": {
+   "main": [
+    [
+     {
+      "node": "After link",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "After link": {
+   "main": [
+    [
+     {
+      "node": "Link ok?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Link ok?": {
+   "main": [
+    [
+     {
+      "node": "Ledger row",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Ledger row": {
+   "main": [
+    [
+     {
+      "node": "Upsert ledger",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Upsert ledger": {
+   "main": [
+    [
+     {
+      "node": "Find open rows",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find open rows": {
+   "main": [
+    [
+     {
+      "node": "Rows to close",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Rows to close": {
+   "main": [
+    [
+     {
+      "node": "Close rows",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Close rows": {
+   "main": [
+    [
+     {
+      "node": "Write done",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write done": {
+   "main": [
+    [
+     {
+      "node": "Log row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Skip?": {
+   "main": [
+    [
+     {
+      "node": "Find open rows (skip)",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find open rows (skip)": {
+   "main": [
+    [
+     {
+      "node": "Rows to close (skip)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Rows to close (skip)": {
+   "main": [
+    [
+     {
+      "node": "Close rows (skip)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Close rows (skip)": {
+   "main": [
+    [
+     {
+      "node": "Skip done",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Skip done": {
+   "main": [
+    [
+     {
+      "node": "Log row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Attention": {
+   "main": [
+    [
+     {
+      "node": "Replay row?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Replay row?": {
+   "main": [
+    [
+     {
+      "node": "Replay count",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "New row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "New row": {
+   "main": [
+    [
+     {
+      "node": "Insert row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Insert row": {
+   "main": [
+    [
+     {
+      "node": "Row alert",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Row alert": {
+   "main": [
+    [
+     {
+      "node": "Alert state",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Replay count": {
+   "main": [
+    [
+     {
+      "node": "Update replay row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Update replay row": {
+   "main": [
+    [
+     {
+      "node": "Replay alert",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Replay alert": {
+   "main": [
+    [
+     {
+      "node": "Alert state",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Alert state": {
+   "main": [
+    [
+     {
+      "node": "Slack alert",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Slack alert": {
+   "main": [
+    [
+     {
+      "node": "Alert row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Alert row": {
+   "main": [
+    [
+     {
+      "node": "Save alert",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Save alert": {
+   "main": [
+    [
+     {
+      "node": "Attention done",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Attention done": {
+   "main": [
+    [
+     {
+      "node": "Log row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Log row": {
+   "main": [
+    [
+     {
+      "node": "Write log",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ }
+}

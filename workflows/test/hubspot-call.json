@@ -1,0 +1,420 @@
+{
+ "name": "Q129 HubSpot call",
+ "nodes": [
+  {
+   "id": "3639cf7b-c027-5928-9a85-3206ecb37dae",
+   "name": "Start",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.3,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "inputSource": "passthrough"
+   }
+  },
+  {
+   "id": "333be837-0313-5a49-a3b0-2b147b6821db",
+   "name": "Try 1",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    240,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $('Start').first().json.base + $('Start').first().json.path }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "hubspotAppToken",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($('Start').first().json.body) }}",
+    "options": {
+     "timeout": 15000,
+     "response": {
+      "response": {
+       "fullResponse": true,
+       "neverError": true,
+       "responseFormat": "json"
+      }
+     }
+    }
+   },
+   "credentials": {
+    "hubspotAppToken": {
+     "id": "__CRED:hubspotAppToken__",
+     "name": "HubSpot n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "10f4f155-d551-5188-b43e-eea3f09d539e",
+   "name": "Check 1",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    480,
+    0
+   ],
+   "parameters": {
+    "jsCode": "const R = $('Start').first().json;\nconst r = $input.first().json || {};\nconst n = 1;\nconst code = typeof r.statusCode === 'number' ? r.statusCode : null;\nlet status = code;\nif (code === 207) {\n  const e = ((r.body || {}).errors || [])[0] || {};\n  status = Number(e.status) || (e.category === 'CONFLICT' ? 409 : 400);\n}\nconst out = { done: true, ok: false, attempts: n, status, reason: null, wait: 0, body: r.body || null,\n  error: code === null ? String((r.error && (r.error.message || r.error.code || JSON.stringify(r.error))) || 'no answer').slice(0, 300) : '' };\nconst hdr = (r.headers || {});\nif (code !== null && status >= 200 && status < 300) { out.ok = true; return [{ json: out }]; }\nlet retry = false;\nif (status === 429) {\n  const ra = Number(hdr['retry-after']);\n  out.wait = Number.isFinite(ra) && ra >= 0 ? Math.min(ra, 10) : 2;\n  retry = true;\n} else if (status === 409) { retry = n === 1; out.wait = 1; }\nelse if (code === null || [500, 502, 503, 504].includes(status) || status >= 500) { retry = true; out.wait = n === 1 ? 2 : 8; }\nelse if (status === 401 || status === 403) { out.reason = 'crm_auth_error'; return [{ json: out }]; }\nelse { out.reason = 'crm_bad_request'; return [{ json: out }]; }\nif (retry && n < 3) { out.done = false; return [{ json: out }]; }\nout.reason = 'crm_retry_exhausted';\nreturn [{ json: out }];\n"
+   }
+  },
+  {
+   "id": "d988139d-3e2b-5bd1-a504-8aa856ba0434",
+   "name": "Retry 1?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    720,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "d988139d-3e2b-5bd1-a504-8aa856ba0434",
+       "leftValue": "={{ $json.done === false }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "28404abc-0acc-5292-8944-500d44437434",
+   "name": "Wait 1",
+   "type": "n8n-nodes-base.wait",
+   "typeVersion": 1.1,
+   "position": [
+    960,
+    170
+   ],
+   "parameters": {
+    "resume": "timeInterval",
+    "amount": "={{ $json.wait }}",
+    "unit": "seconds"
+   },
+   "webhookId": "d0989ece-1341-5942-a7d8-33a813385a73"
+  },
+  {
+   "id": "818a648e-2efb-5507-9b7a-082ae028d3c9",
+   "name": "Try 2",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1200,
+    170
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $('Start').first().json.base + $('Start').first().json.path }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "hubspotAppToken",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($('Start').first().json.body) }}",
+    "options": {
+     "timeout": 15000,
+     "response": {
+      "response": {
+       "fullResponse": true,
+       "neverError": true,
+       "responseFormat": "json"
+      }
+     }
+    }
+   },
+   "credentials": {
+    "hubspotAppToken": {
+     "id": "__CRED:hubspotAppToken__",
+     "name": "HubSpot n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "3d057fae-ae98-5911-98f6-824dc6167c7e",
+   "name": "Check 2",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1440,
+    170
+   ],
+   "parameters": {
+    "jsCode": "const R = $('Start').first().json;\nconst r = $input.first().json || {};\nconst n = 2;\nconst code = typeof r.statusCode === 'number' ? r.statusCode : null;\nlet status = code;\nif (code === 207) {\n  const e = ((r.body || {}).errors || [])[0] || {};\n  status = Number(e.status) || (e.category === 'CONFLICT' ? 409 : 400);\n}\nconst out = { done: true, ok: false, attempts: n, status, reason: null, wait: 0, body: r.body || null,\n  error: code === null ? String((r.error && (r.error.message || r.error.code || JSON.stringify(r.error))) || 'no answer').slice(0, 300) : '' };\nconst hdr = (r.headers || {});\nif (code !== null && status >= 200 && status < 300) { out.ok = true; return [{ json: out }]; }\nlet retry = false;\nif (status === 429) {\n  const ra = Number(hdr['retry-after']);\n  out.wait = Number.isFinite(ra) && ra >= 0 ? Math.min(ra, 10) : 2;\n  retry = true;\n} else if (status === 409) { retry = n === 1; out.wait = 1; }\nelse if (code === null || [500, 502, 503, 504].includes(status) || status >= 500) { retry = true; out.wait = n === 1 ? 2 : 8; }\nelse if (status === 401 || status === 403) { out.reason = 'crm_auth_error'; return [{ json: out }]; }\nelse { out.reason = 'crm_bad_request'; return [{ json: out }]; }\nif (retry && n < 3) { out.done = false; return [{ json: out }]; }\nout.reason = 'crm_retry_exhausted';\nreturn [{ json: out }];\n"
+   }
+  },
+  {
+   "id": "e522af7c-9d00-5411-b0ef-ada99795bc04",
+   "name": "Retry 2?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1680,
+    170
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "e522af7c-9d00-5411-b0ef-ada99795bc04",
+       "leftValue": "={{ $json.done === false }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "c0558f48-67ee-551a-8f4c-339dfb6b2ed3",
+   "name": "Wait 2",
+   "type": "n8n-nodes-base.wait",
+   "typeVersion": 1.1,
+   "position": [
+    1920,
+    340
+   ],
+   "parameters": {
+    "resume": "timeInterval",
+    "amount": "={{ $json.wait }}",
+    "unit": "seconds"
+   },
+   "webhookId": "99a71e8b-3786-5607-963c-70be53491c1a"
+  },
+  {
+   "id": "6152ab9f-d794-5142-a7b3-37f9dd80c592",
+   "name": "Try 3",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2160,
+    340
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $('Start').first().json.base + $('Start').first().json.path }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "hubspotAppToken",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($('Start').first().json.body) }}",
+    "options": {
+     "timeout": 15000,
+     "response": {
+      "response": {
+       "fullResponse": true,
+       "neverError": true,
+       "responseFormat": "json"
+      }
+     }
+    }
+   },
+   "credentials": {
+    "hubspotAppToken": {
+     "id": "__CRED:hubspotAppToken__",
+     "name": "HubSpot n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "8b83898f-6d49-5c7a-81b2-08181d412ad5",
+   "name": "Check 3",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2400,
+    340
+   ],
+   "parameters": {
+    "jsCode": "const R = $('Start').first().json;\nconst r = $input.first().json || {};\nconst n = 3;\nconst code = typeof r.statusCode === 'number' ? r.statusCode : null;\nlet status = code;\nif (code === 207) {\n  const e = ((r.body || {}).errors || [])[0] || {};\n  status = Number(e.status) || (e.category === 'CONFLICT' ? 409 : 400);\n}\nconst out = { done: true, ok: false, attempts: n, status, reason: null, wait: 0, body: r.body || null,\n  error: code === null ? String((r.error && (r.error.message || r.error.code || JSON.stringify(r.error))) || 'no answer').slice(0, 300) : '' };\nconst hdr = (r.headers || {});\nif (code !== null && status >= 200 && status < 300) { out.ok = true; return [{ json: out }]; }\nlet retry = false;\nif (status === 429) {\n  const ra = Number(hdr['retry-after']);\n  out.wait = Number.isFinite(ra) && ra >= 0 ? Math.min(ra, 10) : 2;\n  retry = true;\n} else if (status === 409) { retry = n === 1; out.wait = 1; }\nelse if (code === null || [500, 502, 503, 504].includes(status) || status >= 500) { retry = true; out.wait = n === 1 ? 2 : 8; }\nelse if (status === 401 || status === 403) { out.reason = 'crm_auth_error'; return [{ json: out }]; }\nelse { out.reason = 'crm_bad_request'; return [{ json: out }]; }\nif (retry && n < 3) { out.done = false; return [{ json: out }]; }\nout.reason = 'crm_retry_exhausted';\nreturn [{ json: out }];\n"
+   }
+  },
+  {
+   "id": "54b8678d-5bed-5aa4-89ac-11b1ed2c1e20",
+   "name": "Result",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2640,
+    0
+   ],
+   "parameters": {
+    "jsCode": "return $input.all();\n"
+   }
+  }
+ ],
+ "connections": {
+  "Start": {
+   "main": [
+    [
+     {
+      "node": "Try 1",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Try 1": {
+   "main": [
+    [
+     {
+      "node": "Check 1",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check 1": {
+   "main": [
+    [
+     {
+      "node": "Retry 1?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Retry 1?": {
+   "main": [
+    [
+     {
+      "node": "Wait 1",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Result",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Wait 1": {
+   "main": [
+    [
+     {
+      "node": "Try 2",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Try 2": {
+   "main": [
+    [
+     {
+      "node": "Check 2",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check 2": {
+   "main": [
+    [
+     {
+      "node": "Retry 2?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Retry 2?": {
+   "main": [
+    [
+     {
+      "node": "Wait 2",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Result",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Wait 2": {
+   "main": [
+    [
+     {
+      "node": "Try 3",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Try 3": {
+   "main": [
+    [
+     {
+      "node": "Check 3",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check 3": {
+   "main": [
+    [
+     {
+      "node": "Result",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ }
+}
