@@ -9,7 +9,10 @@ Every run checks the WHOLE set and stops, writing nothing, on:
 - an order number or e-mail shared between cases that are not marked related;
 - a dependency that is missing or comes after the case that needs it;
 - an unknown expected result (HTTP code, result, reason, alert, row state);
-- an expected result that disagrees with the rules (reference model).
+- an expected result that disagrees with the rules (reference model);
+- (gate v2, R1 findings 4 and 11) a parallel group whose events differ in
+  body or carry faults or force_crash; a case that is not gated or whose
+  simulated flag is wrong; a file whose format_version or case_count is wrong.
 
 Run:   python tests/make_cases.py
        -> writes tests/cases/visible.json and prints its SHA-256.
@@ -338,7 +341,8 @@ class Model:
             out["alerts"].append({"type": "crash"})
             return out
         order, mod = rec["order_number"], rec["modified"]
-        data = (rec["contact"], rec["deal"])
+        data = hashlib.sha256(json.dumps([rec["contact"], rec["deal"]], sort_keys=True,
+                                         ensure_ascii=True).encode("utf-8")).hexdigest()
         led = self.ledger.get(order)
         if led is not None:
             if mod < led["modified"]:
@@ -593,6 +597,23 @@ def check_set(cases, set_name):
         raise CaseError("\n".join(errs))
 
 
+def check_doc(doc, set_name):
+    """File-level checks, then the whole-set check."""
+    errs = []
+    if doc.get("format_version") != FORMAT_VERSION:
+        errs.append("file: format_version must be %d, is %r" % (FORMAT_VERSION, doc.get("format_version")))
+    if doc.get("set") != set_name:
+        errs.append("file: set is %r, expected %r" % (doc.get("set"), set_name))
+    cases = doc.get("cases")
+    if not isinstance(cases, list):
+        raise CaseError("file: cases must be a list")
+    if doc.get("case_count") != len(cases):
+        errs.append("file: case_count is %r, the file has %d cases" % (doc.get("case_count"), len(cases)))
+    if errs:
+        raise CaseError("\n".join(errs))
+    check_set(cases, set_name)
+
+
 def check_events(c, err):
     cid = c.get("id")
     events = c.get("events")
@@ -644,6 +665,24 @@ def check_events(c, err):
                 err(cid, "step %s: unknown alert type %r" % (i, a.get("type")))
         if exp.get("attention_row") not in ROW_EFFECTS:
             err(cid, "step %s: unknown attention_row %r" % (i, exp.get("attention_row")))
+    if c.get("gated") is not True:
+        err(cid, "gated must be true (every case in this build is gated)")
+    sim = any(ev.get("faults") or ev.get("force_crash") for ev in events)
+    if c.get("simulated") is not sim:
+        err(cid, "simulated must be %s (an event has faults or force_crash: %s)" % (sim, sim))
+    groups = {}
+    for ev in events:
+        if ev.get("parallel") is not None:
+            groups.setdefault(ev["parallel"], []).append(ev)
+    for name, evs in groups.items():
+        if any(ev.get("type") != "webhook" for ev in evs):
+            err(cid, "parallel group %s: only webhook events can be parallel" % name)
+        if len({ev.get("body") for ev in evs}) != 1:
+            err(cid, "parallel group %s: events must have the same body bytes" % name)
+        if any(ev.get("faults") is not None for ev in evs):
+            err(cid, "parallel group %s: faults must be null" % name)
+        if any(ev.get("force_crash") for ev in evs):
+            err(cid, "parallel group %s: force_crash must be false" % name)
     fin = c.get("expected_final") or {}
     for r in fin.get("attention_rows", []):
         if r.get("state") not in ROW_STATES or r.get("closed_by") not in CLOSED_BY:
@@ -1292,16 +1331,14 @@ def main(argv=None):
             with open(args.check, encoding="utf-8") as fh:
                 raw = fh.read()
             doc = json.loads(raw)
-            if doc.get("set") != args.set:
-                raise CaseError("file says set %r, --set is %r" % (doc.get("set"), args.set))
-            check_set(doc["cases"], args.set)
+            check_doc(doc, args.set)
             print("OK %s: %d cases, SHA-256 %s" % (args.check, len(doc["cases"]),
                                                    hashlib.sha256(raw.encode("utf-8")).hexdigest()))
             return 0
         cases = build_visible()
-        check_set(cases, "visible")
-        check_cases_md(cases)
         text = serialize(cases, "visible")
+        check_doc(json.loads(text), "visible")
+        check_cases_md(cases)
     except CaseError as e:
         print("test set error, nothing written:\n" + str(e))
         sys.exit(1)

@@ -4,8 +4,15 @@ Written before the build (eval gate: `evals/eval_config.yaml`). The
 workflow is built to these rules, never the reverse. A separate session
 writes the hold-out cases from this file alone (section 8).
 
-Plan: `BLUEPRINT.md` v1.2 (locked 2026-10-20), section 5. Where this
-file is more exact than the blueprint, this file is the test rule.
+Plan: `BLUEPRINT.md` v1.3 (locked 2026-10-20; v1.3 records the R1
+changes), section 5. Where this file is more exact than the blueprint,
+this file is the test rule.
+
+Gate version 2, 2026-10-20 (`evals/eval_config.yaml` v2): R1 red-team
+test changes 2, 3, 4, 5 and 11 (section 6, H4, 5.2, the generator
+checks) and R1 build notes 1, 6-10, 13, 14, 16, 17 (clarifying
+sentences). No expected value of any visible case changed. Version 1 is
+gate commit 849b93e.
 
 ## 1. Sources (checked 2026-10-20)
 
@@ -37,6 +44,11 @@ Fact vs. assumption: the HubSpot property names and deal stage labels in
 3.4 are assumptions until the P2 probe confirms them in the "Portfolio
 Demo" account (BLUEPRINT P2). If P2 finds a different name, only the
 mapping table changes (by ADR); the expected values in the cases do not.
+Known before P2 (R1 finding 1): HubSpot answers 400 for a
+`deal_currency_code` that is not set up in the account, and a free
+account has one currency. If P2 confirms this, the logical field
+`currency` maps to a custom text deal property `shop_currency` (by ADR);
+the cases still expect `EUR`, `GBP` and `USD`.
 
 ## 2. What is tested
 
@@ -45,15 +57,21 @@ The system under test is the set of n8n workflows in BLUEPRINT section 3
 on the shared local n8n, writing to the HubSpot "Portfolio Demo" account
 and posting to Slack `#data-sync-alerts`. The test runner:
 
-- sends each webhook event as WooCommerce would (headers from 5.3, the
-  exact `body` bytes, a signature it computes with the webhook secret);
+- sends each webhook event as WooCommerce would (headers from 5.2, the
+  exact `body` bytes, a signature it computes with the webhook secret).
+  The runner adds the headers the case file does not hold:
+  `X-WC-Webhook-Source: https://harbour-ebikes.example.com/`,
+  `X-WC-Webhook-Resource` and `-Event` split from the topic (`order`,
+  `created`), `User-Agent: WooCommerce/11.2.1 Hookshot (WordPress/7.1.3)`;
+  for the ping (topic null) none of them;
 - puts the local fault proxy (port 8130) between n8n and HubSpot and
   tells it the faults of the event (5.4);
 - presses replay through the `Q129 Replay` form with its login;
 - triggers the summary for the window of the case (3.11);
 - reads back HubSpot (API), the n8n data tables (`q129_ledger`,
-  `q129_attention`, `q129_log`) and what the workflows recorded they sent
-  to Slack (text and Slack message ID). Slack itself is not read.
+  `q129_attention`, `q129_log`, `q129_alerts`) and what the workflows
+  recorded they sent to Slack (text and Slack message ID). Slack itself
+  is not read.
 
 Cases run one at a time, in file order, the events of a case in step
 order. Before each full run the reset script archives this build's
@@ -95,7 +113,7 @@ first one is the row's main reason.
 | 4 | `total` | absent, null, or empty after trim | not a JSON string, or after trim not matching `^[0-9]+(\.[0-9]{1,2})?$` (so no minus sign, no comma, no thousands separator, at most 2 decimals) |
 | 5 | `currency` | absent, null, or empty after trim | not a string, or after trim not exactly one of `EUR`, `GBP`, `USD` (case matters) |
 | 6 | `status` | absent, null, or empty after trim | not a string, or after trim not exactly one of the 8 statuses in 3.4 |
-| 7 | `date_created_gmt` | absent, null, or empty after trim | not a string, or not `YYYY-MM-DDTHH:MM:SS` (no zone, no fraction), or not a real date and time (for example 2026-09-31) |
+| 7 | `date_created_gmt` | absent, null, or empty after trim | not a string, or not `YYYY-MM-DDTHH:MM:SS` (no zone, no fraction), or not a real date and time: real calendar day (for example not 2026-09-31), hours 00-23, minutes 00-59, seconds 00-59 (so `24:00:00` and `:60` are invalid) |
 | 8 | `date_modified_gmt` | as row 7 | as row 7 |
 | 9 | text fields: `billing.first_name`, `last_name`, `phone`, `company`, `address_1`, `address_2`, `city`, `postcode`, `country` | | any of them is a JSON value that is not a string and not null: one reason `invalid_text_field` |
 
@@ -178,9 +196,10 @@ links are never removed.
 ### 3.5 Versions, duplicates and older updates (ledger `q129_ledger`)
 
 The version of an order is its cleaned `date_modified_gmt`. The ledger
-keeps, per order number, the version and the cleaned data (all logical
-fields of 3.4, empty ones included) of the last version that was fully
-synced. After the checks pass:
+keeps, per order number, the version and a SHA-256 of the cleaned data
+(all logical fields of 3.4, empty ones included) of the last version
+that was fully synced; not the values themselves. "Same cleaned data"
+below means the same hash. After the checks pass:
 
 | ledger has | incoming version is | result |
 |---|---|---|
@@ -218,8 +237,14 @@ the HubSpot upserts by key then still give one contact and one deal.
   header 2 s), 500, 502, 503, 504, timeout, closed connection. Waits
   for 5xx, timeout and closed connection: 2 s, then 8 s.
 - No retry: 400, 401, 403, 404.
+- If `Retry-After` is above 10, wait 10 s and retry.
 - At most 3 attempts per write (the first try + 2 retries). n8n node
   retry is off; one own retry loop, no double retry.
+- Build note (two writes at the same moment): a 409 on an upsert is
+  retried once as the same upsert; a 207 (batch answer with an error
+  inside) is handled by the status of the error inside. Two parallel
+  ledger writes for one new order must still leave one ledger row (H2);
+  P2 probes this.
 - After the contact or the deal write fails for good: `needs_attention`
   with reason `crm_retry_exhausted` (retries used up),
   `crm_auth_error` (401, 403) or `crm_bad_request` (400, 404). What was
@@ -278,7 +303,10 @@ no alert. The daily summary is a message, not an alert.
   summary is itself visible). Counts for the window:
   `synced` (results `created`), `updated`, `skipped_duplicate`,
   `skipped_older`, `needs_attention` (new rows), `still_open` (of those
-  rows, the ones still open). Replays count by their result.
+  rows, the ones still open). Replays count by their result: a failed
+  replay opens no row, so it adds nothing to `needs_attention`; a replay
+  that ends `created`, `updated`, `skipped_duplicate` or `skipped_older`
+  counts in that result's count.
 - More than 5 new rows in the window: also one `over_5` alert.
 
 ### 3.12 Log (`q129_log`)
@@ -289,6 +317,13 @@ write, seconds, and for replays the row ID and the user. Results:
 `created`, `updated`, `skipped_duplicate`, `skipped_older`,
 `needs_attention`, `ignored`, `rejected`, `replay_refused`. A crash may
 leave no log row; its alert is the record.
+
+Sent Slack messages (`q129_alerts`, build note): every workflow that
+posts to Slack (Core, Replay, Summary, Error) writes one row per
+message: time, type (`attention`, `replay_failed`, `over_5`, `crash`,
+`summary`), order number, reason, row ID, delivery ID or execution ID,
+Slack message ID, text. The runner grades alerts and summaries from
+this table.
 
 ### 3.13 Forced crash (test copy only)
 
@@ -311,8 +346,8 @@ run; one break in any case of any run = FAIL.
   (failed check, unsigned or bad signature, ignored, skipped, refused,
   crash) leaves this case's HubSpot records exactly as before; a record
   expected with count 0 does not exist.
-- **H4 nothing lost or silent**: every event has its log row and its
-  expected result; every `needs_attention` has its row (or replay
+- **H4 nothing lost or silent**: every event has its log row (except a
+  crash, whose alert is the record) and its expected result; every `needs_attention` has its row (or replay
   count) and its alert; a crash has its alert; every summary posts.
 - **H5 good data kept**: no stored value is replaced by a blank or by a
   value of an older version of the same order.
@@ -383,7 +418,7 @@ Webhook event:
 | `content_type` | `application/json`, or null for none |
 | `body` | the exact body text to send |
 | `sign` | `valid` (secret), `none` (no header), `wrong_secret` (another secret), `tampered` (sign `body`, then send it with `tamper.find` replaced once by `tamper.replace`) |
-| `parallel` | null, or a group name: events with the same name are sent at the same moment |
+| `parallel` | null, or a group name: events with the same name are sent at the same moment. Events in one group have the same `body` bytes (the topic may differ), `faults` null and `force_crash` false; the generator stops on any other group |
 | `faults` | null, or `{"contacts": [...], "deals": [...]}` (5.4) |
 | `force_crash` | true only for the crash test (3.13) |
 | `expect` | 5.3 |
@@ -418,7 +453,9 @@ return that code without forwarding (`429:2` adds `Retry-After: 2`);
 forward, then hold the answer past the 15 s timeout; `close` = close
 the connection without forwarding. Other HubSpot requests (reads, the
 link) always pass. If P2 needs other upsert paths, the ADR updates
-this list; the cases stay.
+this list; the cases stay. The proxy logs every real non-2xx answer from
+HubSpot (time, path, status), so a miss caused by HubSpot itself can be
+explained in `evals/RESULTS.md`; it is still a miss.
 
 ### 5.5 End state (`expected_final`)
 
@@ -480,15 +517,33 @@ make the exact bytes WooCommerce sends from a JSON object in Python:
 
 ## 6. How a case is graded
 
-After each step the runner waits for the log row of the step (by
-delivery ID; for replay and summary by the runner's request), at most
-60 s, then checks `expect`. For `hubspot_unchanged` it reads this
-case's contacts and deals before and after the step. After the last
-step it checks `expected_final` through the HubSpot API and the n8n
-tables. A case passes only when every check passes; then the next case
-starts. Each full run is repeated 3 times on one frozen workflow commit
-(eval config). A step that exceeds the wait is a miss (H4), unless the
-test machinery failed (INVALID RUN, eval-gate §6).
+**Waiting.** After each step the runner waits for the log row of the
+step (by delivery ID; for replay and summary by the runner's request),
+then checks `expect`. The longest wait for a step is 60 s, plus, for
+every response in that step's fault lists: 17 s per `timeout` or
+`timeout_after_forward`, 10 s per `429` or `429:<seconds>`, 8 s per
+`500`, `502`, `503`, `504` or `close`. For a step whose expected result
+is `crash`, the runner waits for the recorded `crash` alert instead of
+the log row (same longest wait, matched by time after the step was
+sent); a log row is allowed but not required. A step that exceeds its
+wait is a miss (H4), unless the test machinery failed (INVALID RUN,
+eval-gate §6).
+
+**Reading HubSpot.** Field values and the before/after reads for
+`hubspot_unchanged` use GET by `idProperty` (`email` for contacts,
+`shop_order_id` for deals), which shows a write at once. Counts for H2
+use the search API, only after the record read by `idProperty` also
+appears in search (poll, at most 60 s); deals are counted both by
+`shop_order_id` and by `dealname` = `Order #<number>`, so a deal
+written without the key is still seen. For a step with
+`hubspot_unchanged: true`, "nothing written" also means the fault proxy
+forwarded 0 upsert requests to HubSpot in that step (requests the proxy
+answered itself without forwarding do not count).
+
+**Passing.** After the last step the runner checks `expected_final`
+through the HubSpot API and the n8n tables. A case passes only when
+every check passes; then the next case starts. Each full run is
+repeated 3 times on one frozen workflow commit (eval config).
 
 ## 7. The visible cases
 
@@ -594,6 +649,12 @@ file only.
    repository, write `evals/holdout_commitment.json` (date, case count,
    count per kind, count per result, archive SHA-256, where it is kept,
    how to open). Only that file is committed here.
+7. Opening (gate v2, owner 2026-10-20): at the first gated run, after
+   the seal check and before any scoring, run the current checker on
+   the extracted file: `python tests/make_cases.py --check <file> --set
+   holdout`. The hold-out was sealed under gate v1; any case the v2
+   checker refuses is a wrong case for an owner decision (eval-gate §7),
+   never a silent fix, and the refusal is recorded in `evals/RESULTS.md`.
 
 ## 9. Not tested here
 

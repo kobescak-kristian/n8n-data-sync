@@ -4,9 +4,25 @@
 # section 7): cases and expected results, grading, level, runs. A change applies
 # only to the next version, by a new dated version of this file and a note in
 # evals/RESULTS.md; the old version stays in git history.
-version: 1
+version: 2
 date: 2026-10-20
-plan: "BLUEPRINT.md v1.2 (LOCKED 2026-10-20), section 5"
+plan: "BLUEPRINT.md v1.3 (LOCKED 2026-10-20; v1.3 records the R1 changes), section 5"
+changes:
+  - version: 2
+    date: 2026-10-20
+    decision: "Approved: R1 findings 2, 3, 4, 5 and 11 (test changes), owner, 2026-10-20."
+    before_any_run: true
+    what: >-
+      R1 red-team test changes (report q129-r1-gate-redteam.md in the shared notes): 2 longest wait per step
+      grows with the step's faults; 3 a crash step waits for the crash alert, a log row is not required (H4);
+      4 parallel groups must have the same body, no faults, no force_crash (generator stops otherwise);
+      5 HubSpot reads by idProperty, H2 counts by search after the record shows there, deals also counted by
+      dealname, hubspot_unchanged also needs 0 forwarded upserts; 11 the generator also stops on gated not
+      true, a wrong simulated flag, a wrong case_count or format_version. No expected value of any visible
+      case changed (tests/cases/visible.json has the same SHA-256 as under version 1).
+  - version: 1
+    date: 2026-10-20
+    commit: 849b93e
 rules: tests/CASES.md
 procedure: "eval-gate skill; kristian-os EVAL_STANDARD.md"
 
@@ -56,8 +72,17 @@ grading:
   method: "code only (BLUEPRINT section 5); no LLM, no person grades a case"
   reads: >-
     After each case: HubSpot API (contacts by e-mail, deals by shop_order_id, their properties and links),
-    n8n data tables q129_ledger, q129_attention, q129_log, and what the workflows recorded they sent to Slack
-    (text + Slack message ID). Slack is not read.
+    n8n data tables q129_ledger, q129_attention, q129_log, q129_alerts (what the workflows recorded they
+    sent to Slack: text + Slack message ID). Slack is not read.
+  hubspot_reads: >-
+    Field values and the before/after reads for hubspot_unchanged by GET with idProperty (email,
+    shop_order_id). H2 counts by the search API only after the record read by idProperty also shows in
+    search (poll, at most 60 s); deals counted by shop_order_id and by dealname "Order #<number>". A step
+    with hubspot_unchanged true also needs 0 upsert requests forwarded by the fault proxy (tests/CASES.md 6).
+  wait_per_step: >-
+    Longest wait 60 s + 17 s per timeout or timeout_after_forward + 10 s per 429 + 8 s per 5xx or close in
+    the step's fault lists; a crash step waits for the recorded crash alert instead of the log row
+    (tests/CASES.md 6). A step over its wait is a miss (H4) unless the test machinery failed (INVALID RUN).
   simulated: "Cases with faults or force_crash are labelled simulated in the results (fault proxy port 8130)."
 
 comparison_policy:
@@ -92,8 +117,10 @@ dataset:
     self_check: >-
       Every generator run checks the whole set and stops, writing nothing, on duplicate case IDs, an order
       number or e-mail shared between cases not marked related, a missing or late dependency, an unknown expected
-      value, or an expected value that disagrees with the reference model of tests/CASES.md.
-      tests/test_make_cases.py plants each mistake and checks that it stops.
+      value, or an expected value that disagrees with the reference model of tests/CASES.md; since version 2
+      also on a parallel group with different bodies, faults or force_crash, a case not gated, a wrong
+      simulated flag, a wrong case_count or format_version. tests/test_make_cases.py plants each mistake and
+      checks that it stops.
   hold_out_set:
     share: "about 30% of all cases (about 29 with 67 visible; at least 2 per kind)"
     author: "a separate session that never builds and never opens the visible cases; from tests/CASES.md only"
@@ -101,6 +128,11 @@ dataset:
     check: "python tests/make_cases.py --check <file> --set holdout, before sealing"
     commitment: "evals/holdout_commitment.json (case count, count per kind and per result, archive SHA-256), committed before the workflow build"
     opening: "at the gated runs: check the archive SHA-256 against the commitment, extract to a new empty folder, stop on any shared case ID or order number with the visible set; a mismatch voids the hold-out result"
+    opening_v2_check: >-
+      The hold-out was sealed under gate version 1. At the first gated run, after the seal check and before
+      any scoring, run `python tests/make_cases.py --check <extracted file> --set holdout` (version 2 checker).
+      Any case it refuses is a wrong case for an owner decision (eval-gate section 7), recorded in
+      evals/RESULTS.md, never a silent fix.
 
 # --- Runs ---
 runs:

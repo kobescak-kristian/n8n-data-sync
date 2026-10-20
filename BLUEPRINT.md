@@ -2,7 +2,7 @@
 
 ## 0. Header
 
-- Version: v1.2.1, 2026-10-20
+- Version: v1.3, 2026-10-20
 - Status: LOCKED 2026-10-20 by Kristian Kobescak (owner: "approved.", after v1.1)
 - Owner: Kristian Kobescak
 - Build type: portfolio
@@ -68,7 +68,7 @@ Test tools: Python runner (signs and sends payloads, reads HubSpot and the table
 
 **Stack proposal:**
 - **n8n:** local 2.43.7, shared with other builds. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130. Never restart, upgrade or reconfigure n8n; never touch other builds' workflows or credentials. Building in parallel is always fine. Before exclusive use (a full or gated test series, or anything that affects n8n as a whole): read `n8n-usage.md` in the shared notes; if another build has an open line (not DONE), wait for its "free" message; if not, add the line "IN USE Q-129 from HH:MM, expected end HH:MM, <what>" and send a one-line message to the other build sessions. When finished: mark the line DONE and send a one-line "n8n free" message. Messages only at start and end of exclusive use (owner rule, 2026-10-20). Session IDs of the other builds: in that shared notes folder or from the planning session.
-- **HubSpot:** the existing free demo account "Portfolio Demo" (made for Q-116, separate from the owner's real HubSpot; owner, 2026-10-20). This build adds 2 custom deal properties (`shop_order_id`, unique; `shop_modified_at`) and 1 contact property (`sync_source`). Its test records use only its own e-mail domains, and the reset touches only records with `sync_source = harbour-demo-shop`, so Q-116's contacts are never touched.
+- **HubSpot:** the existing free demo account "Portfolio Demo" (made for Q-116, separate from the owner's real HubSpot; owner, 2026-10-20). This build adds 2 custom deal properties (`shop_order_id`, unique; `shop_modified_at`) and 1 contact property (`sync_source`), plus a text deal property `shop_currency` if P2 finds that the free account has one currency (R1 finding 1; ADR). Its test records use only its own e-mail domains, and the reset touches only records with `sync_source = harbour-demo-shop`, so Q-116's contacts are never touched.
 - **Slack:** the existing demo workspace; new channel `#data-sync-alerts`.
 - **No AI provider, no Google, no new paid service.**
 
@@ -117,7 +117,7 @@ Reliability and security defaults:
 | Limits (R10, S7, P12, L3) | timeouts, caps, payload size, rate limits | HubSpot call timeout 15 s; webhook body over 256 KB rejected; HubSpot free-account rate limit checked in P2 and the runner paced under it; no AI cost |
 | Model (A4) | exact model ID, fallback, alert on drift | N/A because there is no AI step |
 | Approval (A2, S11) | approval before every write; off only with the client's written yes | no approval per write (that removes the point of a sync); replaced by code checks + needs-attention (eval level Standard, 5.); replay is a person's action and the log records who pressed it |
-| Data (S9, R13, L6) | LLM gets only needed fields; retention per place | no LLM; log and ledger keep order number, e-mail, result, IDs (no address); needs-attention keeps the payload until the row is closed + 30 days; n8n executions pruned by the n8n default; Slack alerts carry order number and reason, not the address |
+| Data (S9, R13, L6) | LLM gets only needed fields; retention per place | no LLM; log keeps order number, result, reasons, IDs (no e-mail, no address); ledger keeps order number, version and a SHA-256 of the cleaned data, not the values (R1 finding 13); needs-attention keeps the payload until the row is closed + 30 days; n8n executions pruned by the n8n default; Slack alerts carry order number and reason, not the address |
 | Test and live (R3, R14) | live copy with own credentials and data; rollback written | demo only; README "going live" section: own HubSpot key, own secret, live export without test helpers; rollback = deactivate, import the previous commit, replay the needs-attention rows |
 | Hosting (S12, P10) | managed host or hardened self-hosting | N/A for the demo (local shared n8n, not exposed); README tells a client to use n8n Cloud or a managed host |
 | Code track (P1, P2, P5, P8) | lock file, audits, pinned actions | test tools only: Python standard library plus `requests`, pinned in `requirements.txt` with hashes |
@@ -191,7 +191,7 @@ Visible total 67. Hold-out about 29 (at least 2 per kind; it brings every kind t
 | P0 | scaffold (new-project), this blueprint | done: ecf12bf, KOS-CONTROLS OK; LOCKED v1.2; Q-129 kristian-wiki 59405c2 |
 | P1 | eval gate: CASES.md, generator, 67 visible cases, config; no workflow | gate commit hash in STATE; `python tests/make_cases.py` exit 0, same SHA-256 twice; planted-mistake test exit 0 |
 | P1b | hold-out (separate session) + R1 red team of the gate (separate session) | `evals/holdout_commitment.json` committed, builder re-checks the archive SHA-256 without opening it; R1 report in the shared notes, every finding fixed or recorded |
-| P2 | owner creates the keys and the Slack app; first-hour check in n8n (waits for a free n8n slot) | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read. Or a fallback recorded in an ADR |
+| P2 | owner creates the keys and the Slack app; first-hour check in n8n (waits for a free n8n slot) | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read; the 4 custom properties (`shop_order_id`, `shop_modified_at`, `sync_source`, `shop_currency`) can be created on the free account; account currency read (`/settings/v3/currencies/company-currency` or the UI): one currency means `currency` maps to `shop_currency` (R1 finding 1); a 409 or 207 answer to two parallel upserts, two parallel contact upserts with the same new e-mail give one contact, two parallel ledger writes for one new order give one row (R1 finding 6); round-trip of every field (write, read back by ID, compare): phone stored raw (phone validation off), double spaces and non-Latin text unchanged, `closedate` unchanged when the stage moves to Closed Won or Closed Lost, `shop_modified_at` is a date-time property, an archived contact's e-mail can be used again (R1 finding 7). Or a fallback recorded in an ADR |
 | P3 | entry, core, ledger, needs-attention, replay, summary, error workflow, fault proxy, runner, scorer, reset; first ADR | dry run on 2 cases, runner exit 0 (not a result); full visible run recorded in RESULTS.md, runner exit 0 |
 | P4 | pre-gate readiness | R2 red team of the build (separate session) report in the shared notes, findings fixed or recorded; interaction sweep cases added; 3 full visible runs in a row meet the gate (labelled not gated); `evals/PREFLIGHT.md` done; checkpoint review of the frozen commit OK; 2-case dry run exit 0 |
 | P5 | 3 gated runs (visible + hold-out, one frozen commit) | 3 entries in RESULTS.md, runner exit 0; PASS or FAIL recorded |
@@ -223,6 +223,7 @@ Open:
 
 ## 8. Version log
 
+- v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report q129-r1-gate-redteam.md in the planning session's shared notes). Owner decision: "Approved: R1 findings 2, 3, 4, 5 and 11 (test changes), owner, 2026-10-20." (owner's words in the R1 session: "yes, I agrove."; confirmed in the planning session: "I approve the changes in that session"). Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
 - v1.2.1 2026-10-20: shared n8n coordination rule added to the stack line (owner's words, relayed by the planning session: "when one need exclusively for itself the platform, it needs to send messages to others and when it stop, again send the messages that it's free"). No other change.
 - v1.2 2026-10-20: owner approval ("approved."): decisions 1-4 locked; LOCKED; Q-129 registered (kristian-wiki 59405c2).
 - v1.1 2026-10-20: owner decisions: eval level Standard (critical failures CF1-CF5 become the hard rules H1-H5; red teams 2 instead of one per build phase; no safeguard line), HubSpot "Portfolio Demo", repo name `n8n-data-sync`.

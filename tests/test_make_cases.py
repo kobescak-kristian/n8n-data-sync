@@ -29,9 +29,17 @@ def set_payload(cases, cid, step, **changes):
     ev["body"] = mc.php_json(mc.edit(json.loads(ev["body"]), **changes))
 
 
-def stops(cases, set_name="visible"):
+def as_doc(cases, set_name="visible"):
+    return {"format_version": mc.FORMAT_VERSION, "set": set_name,
+            "case_count": len(cases), "cases": cases}
+
+
+def stops(cases, set_name="visible", doc_change=None):
+    doc = as_doc(cases, set_name)
+    if doc_change:
+        doc_change(doc)
     try:
-        mc.check_set(cases, set_name)
+        mc.check_doc(doc, set_name)
     except mc.CaseError as err:
         return str(err)
     return None
@@ -95,6 +103,24 @@ PLANTS = [
      lambda cs: set_payload(cs, "N01", 1, number="61001")),
     ("e-mail outside the visible domain", "not on the visible domain",
      lambda cs: set_payload(cs, "N02", 1, **{"billing.email": "tomislav.kralj@example.com"})),
+    # gate v2 (R1 findings 4 and 11)
+    ("parallel group with different bodies", "must have the same body bytes",
+     lambda cs: set_payload(cs, "D02", 2, date_modified_gmt="2026-10-09T09:00:00")),
+    ("parallel group with faults", "faults must be null",
+     lambda cs: by_id(cs, "D02")["events"][1].update(faults={"deals": ["503", "pass"]})),
+    ("parallel group with force_crash", "force_crash must be false",
+     lambda cs: by_id(cs, "D06")["events"][2].update(force_crash=True)),
+    ("case not gated", "gated must be true",
+     lambda cs: by_id(cs, "N01").update(gated=False)),
+    ("wrong simulated flag", "simulated must be True",
+     lambda cs: by_id(cs, "T01").update(simulated=False)),
+]
+
+DOC_PLANTS = [
+    ("case_count does not match the file", "case_count is 66",
+     lambda doc: doc.update(case_count=66)),
+    ("unknown format_version", "format_version must be 1",
+     lambda doc: doc.update(format_version=2)),
 ]
 
 
@@ -114,6 +140,12 @@ def main():
         cases = copy.deepcopy(BASE)
         change(cases)
         msg = stops(cases)
+        first = (msg or "not caught").splitlines()[0]
+        report(msg is not None and expected in msg, name,
+               first if msg and expected in msg else "wanted %r, got: %s" % (expected, msg))
+
+    for name, expected, change in DOC_PLANTS:
+        msg = stops(copy.deepcopy(BASE), doc_change=change)
         first = (msg or "not caught").splitlines()[0]
         report(msg is not None and expected in msg, name,
                first if msg and expected in msg else "wanted %r, got: %s" % (expected, msg))
