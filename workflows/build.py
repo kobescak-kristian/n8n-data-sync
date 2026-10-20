@@ -236,11 +236,20 @@ def build_core(live):
     code(w, "Decide", J.DECIDE, 5, -1, executeOnce=True)
     if_true(w, "Write?", "={{ $json.action === 'write' }}", 6, -1)
 
-    # write path: contact, deal, link (CASES.md 3.7), then ledger and closed rows (3.5, 3.8)
+    # write path: contact, deal, link (CASES.md 3.7), then ledger and closed rows (3.5, 3.8); the ledger is read
+    # again before each HubSpot write and before the ledger write (R2 finding 1)
+    get_rows(w, "Recheck ledger 1", "q129_ledger", 6.5, -3,
+             filters=[cond("order_number", "={{ $('Decide').first().json.order_number }}")], executeOnce=True)
+    code(w, "Recheck 1", J.recheck("Decide"), 6.5, -4, executeOnce=True)
+    if_true(w, "Still newest 1?", "={{ $json.action === 'write' }}", 6.5, -5)
     code(w, "Contact request", J.CONTACT_REQUEST, 7, -2)
     run_workflow(w, "Write contact", "hubspot-call", 8, -2)
     code(w, "After contact", J.after_call("Decide", "contacts", "contact_id"), 9, -2)
     if_true(w, "Contact ok?", "={{ $json.action === 'write' }}", 10, -2)
+    get_rows(w, "Recheck ledger 2", "q129_ledger", 10.5, -3,
+             filters=[cond("order_number", "={{ $('After contact').first().json.order_number }}")], executeOnce=True)
+    code(w, "Recheck 2", J.recheck("After contact"), 10.5, -4, executeOnce=True)
+    if_true(w, "Still newest 2?", "={{ $json.action === 'write' }}", 10.5, -5)
     code(w, "Deal request", J.DEAL_REQUEST, 11, -2)
     run_workflow(w, "Write deal", "hubspot-call", 12, -2)
     code(w, "After deal", J.after_call("After contact", "deals", "deal_id"), 13, -2)
@@ -249,7 +258,10 @@ def build_core(live):
     run_workflow(w, "Write link", "hubspot-call", 16, -2)
     code(w, "After link", J.after_call("After deal", "link", ""), 17, -2)
     if_true(w, "Link ok?", "={{ $json.action === 'write' }}", 18, -2)
-    code(w, "Ledger row", J.LEDGER_ROW, 19, -2)
+    get_rows(w, "Recheck ledger 3", "q129_ledger", 18.5, -3,
+             filters=[cond("order_number", "={{ $('After link').first().json.order_number }}")], executeOnce=True)
+    code(w, "Ledger row", J.LEDGER_ROW, 19, -2, executeOnce=True)
+    if_true(w, "Ledger not newer?", "={{ $json.write === true }}", 19.5, -3)
     upsert_rows(w, "Upsert ledger", "q129_ledger", "order_number", "={{ $json.order_number }}",
                 {c: "={{ $json.%s }}" % c for c in ("order_number", "version", "data_hash", "updated_at")}, 20, -2)
     get_rows(w, "Find open rows", "q129_attention", 21, -2,
@@ -261,14 +273,15 @@ def build_core(live):
     code(w, "Write done", J.STEP_DONE.replace("__STATE__", "After link").replace("__SUFFIX__", ""), 24, -2,
          executeOnce=True)
 
-    # skip path: only the replayed row closes (by replay)
+    # skip path (from Decide or from a recheck): only the replayed row closes (by replay)
     if_true(w, "Skip?", "={{ $json.action === 'skip' }}", 7, 0)
+    code(w, "Skip state", J.SKIP_STATE, 7.5, 0.5, executeOnce=True)
     get_rows(w, "Find open rows (skip)", "q129_attention", 8, 0,
-             filters=[cond("order_number", "={{ $('Decide').first().json.order_number }}"), cond("state", "open")],
-             executeOnce=True)
-    code(w, "Rows to close (skip)", J.ROWS_TO_CLOSE.replace("__STATE__", "Decide"), 9, 0, executeOnce=True)
+             filters=[cond("order_number", "={{ $('Skip state').first().json.order_number }}"),
+                      cond("state", "open")], executeOnce=True)
+    code(w, "Rows to close (skip)", J.ROWS_TO_CLOSE.replace("__STATE__", "Skip state"), 9, 0, executeOnce=True)
     update_rows(w, "Close rows (skip)", "q129_attention", "={{ $json.row_id }}", close_values, 10, 0)
-    code(w, "Skip done", J.STEP_DONE.replace("__STATE__", "Decide").replace("__SUFFIX__", " (skip)"), 11, 0,
+    code(w, "Skip done", J.STEP_DONE.replace("__STATE__", "Skip state").replace("__SUFFIX__", " (skip)"), 11, 0,
          executeOnce=True)
 
     # needs attention: new row + alert, or (replay) replay count + alert (CASES.md 3.8, 3.10)
@@ -298,21 +311,30 @@ def build_core(live):
         w.link("Test crash switch", "Data hash")
     w.link("Checks passed?", "Attention", 1)
     w.chain("Data hash", "Find ledger row", "Decide", "Write?")
-    w.link("Write?", "Contact request", 0)
+    w.link("Write?", "Recheck ledger 1", 0)
     w.link("Write?", "Skip?", 1)
+    w.chain("Recheck ledger 1", "Recheck 1", "Still newest 1?")
+    w.link("Still newest 1?", "Contact request", 0)
+    w.link("Still newest 1?", "Skip state", 1)
     w.chain("Contact request", "Write contact", "After contact", "Contact ok?")
-    w.link("Contact ok?", "Deal request", 0)
+    w.link("Contact ok?", "Recheck ledger 2", 0)
     w.link("Contact ok?", "Attention", 1)
+    w.chain("Recheck ledger 2", "Recheck 2", "Still newest 2?")
+    w.link("Still newest 2?", "Deal request", 0)
+    w.link("Still newest 2?", "Skip state", 1)
     w.chain("Deal request", "Write deal", "After deal", "Deal ok?")
     w.link("Deal ok?", "Link request", 0)
     w.link("Deal ok?", "Attention", 1)
     w.chain("Link request", "Write link", "After link", "Link ok?")
-    w.link("Link ok?", "Ledger row", 0)
+    w.link("Link ok?", "Recheck ledger 3", 0)
     w.link("Link ok?", "Attention", 1)
-    w.chain("Ledger row", "Upsert ledger", "Find open rows", "Rows to close", "Close rows", "Write done", "Log row")
-    w.link("Skip?", "Find open rows (skip)", 0)
+    w.chain("Recheck ledger 3", "Ledger row", "Ledger not newer?")
+    w.link("Ledger not newer?", "Upsert ledger", 0)
+    w.link("Ledger not newer?", "Find open rows", 1)
+    w.chain("Upsert ledger", "Find open rows", "Rows to close", "Close rows", "Write done", "Log row")
+    w.link("Skip?", "Skip state", 0)
     w.link("Skip?", "Attention", 1)
-    w.chain("Find open rows (skip)", "Rows to close (skip)", "Close rows (skip)", "Skip done", "Log row")
+    w.chain("Skip state", "Find open rows (skip)", "Rows to close (skip)", "Close rows (skip)", "Skip done", "Log row")
     w.chain("Attention", "Replay row?")
     w.link("Replay row?", "Replay count", 0)
     w.link("Replay row?", "New row", 1)
@@ -333,28 +355,30 @@ def build_entry(live):
     respond(w, "Answer 200", "={{ JSON.stringify({ ok: true }) }}", "={{ 200 }}", 5, -1)
     code(w, "Core input", J.CORE_INPUT, 6, -1)
     run_workflow(w, "Run core", "core", 7, -1)
-    code(w, "Entry log", J.ENTRY_LOG, 5, 1)
-    insert(w, "Write entry log", "q129_log", 6, 1, onError="continueRegularOutput")
+    # answer first, then log: a failed log write crashes and the error workflow alerts (R2 finding 10)
     respond(w, "Answer", "={{ JSON.stringify({ result: $('Gate').first().json.result, reason: $('Gate').first().json.reason }) }}",
-            "={{ $('Gate').first().json.http }}", 7, 1)
+            "={{ $('Gate').first().json.http }}", 5, 1)
+    code(w, "Entry log", J.ENTRY_LOG, 6, 1)
+    insert(w, "Write entry log", "q129_log", 7, 1)
     w.chain("Order in", "Read request", "Sign body", "Gate", "Accepted?")
     w.link("Accepted?", "Answer 200", 0)
-    w.link("Accepted?", "Entry log", 1)
+    w.link("Accepted?", "Answer", 1)
     w.chain("Answer 200", "Core input", "Run core")
-    w.chain("Entry log", "Write entry log", "Answer")
+    w.chain("Answer", "Entry log", "Write entry log")
     return w
 
 
 def build_replay(live):
     w = WF("replay", "Q129 Replay: needs-attention row", live)
     error_workflow(w)
+    fields = [{"fieldLabel": "Row ID", "fieldName": "row_id", "fieldType": "number", "requiredField": True}]
+    if not live:
+        fields.append({"fieldType": "hiddenField", "fieldName": "request_id"})  # test hook only (R2 finding 7)
     w.add("Replay form", "n8n-nodes-base.formTrigger", 2.4, {
         "authentication": "basicAuth", "path": "q129-replay",
         "formTitle": "Replay a needs-attention row",
         "formDescription": "Use this after a HubSpot outage. Orders that failed a field check are fixed in the shop.",
-        "formFields": {"values": [
-            {"fieldLabel": "Row ID", "fieldName": "row_id", "fieldType": "number", "requiredField": True},
-            {"fieldType": "hiddenField", "fieldName": "request_id"}]},
+        "formFields": {"values": fields},
         "responseMode": "onReceived", "options": {}}, 0, cred="httpBasicAuth",
         webhookId=str(uuid.uuid5(uuid.NAMESPACE_URL, "q129/q129-replay")))
     code(w, "Replay request", J.REPLAY_REQUEST, 1)

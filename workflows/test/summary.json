@@ -31,7 +31,7 @@
     0
    ],
    "parameters": {
-    "jsCode": "const item = $input.first();\nconst raw = item.binary && item.binary.data ? await this.helpers.getBinaryDataBuffer(0, 'data') : Buffer.alloc(0);\nconst h = item.json.headers || {};\nconst one = (v) => (Array.isArray(v) ? v[0] : v);\nreturn [{ json: {\n  bytes: raw.length,\n  text: raw.toString('utf8'),\n  has_sig: one(h['x-wc-webhook-signature']) !== undefined,\n  sig: String(one(h['x-wc-webhook-signature']) || ''),\n  topic: one(h['x-wc-webhook-topic']) === undefined ? null : String(one(h['x-wc-webhook-topic'])),\n  delivery_id: one(h['x-wc-webhook-delivery-id']) === undefined ? '' : String(one(h['x-wc-webhook-delivery-id'])),\n  request_id: String(one(h['x-q129-request-id']) || ''),\n  test_crash: true && one(h['x-q129-test-crash']) === 'yes',\n  received_ms: Date.now(),\n}, binary: item.binary }];\n"
+    "jsCode": "const item = $input.first();\nconst raw = item.binary && item.binary.data ? await this.helpers.getBinaryDataBuffer(0, 'data') : Buffer.alloc(0);\nconst h = item.json.headers || {};\nconst one = (v) => (Array.isArray(v) ? v[0] : v);\nreturn [{ json: {\n  bytes: raw.length,\n  text: raw.toString('utf8'),\n  has_sig: one(h['x-wc-webhook-signature']) !== undefined,\n  sig: String(one(h['x-wc-webhook-signature']) || ''),\n  topic: one(h['x-wc-webhook-topic']) === undefined ? null : String(one(h['x-wc-webhook-topic'])),\n  delivery_id: one(h['x-wc-webhook-delivery-id']) === undefined ? '' : String(one(h['x-wc-webhook-delivery-id'])),\n  request_id: true ? String(one(h['x-q129-request-id']) || '') : '',  // test hook only (R2 finding 7)\n  test_crash: true && one(h['x-q129-test-crash']) === 'yes',\n  received_ms: Date.now(),\n}, binary: item.binary }];\n"
    }
   },
   {

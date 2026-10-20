@@ -22,10 +22,6 @@
        "fieldName": "row_id",
        "fieldType": "number",
        "requiredField": true
-      },
-      {
-       "fieldType": "hiddenField",
-       "fieldName": "request_id"
       }
      ]
     },

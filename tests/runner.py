@@ -5,7 +5,9 @@
     python tests/runner.py --label gated-1 --data <folder>   # visible + the hold-out file in <folder>
 
 Grading follows tests/CASES.md sections 5-6 and evals/eval_config.yaml; the gate verdict over 3 runs is
-tests/score.py. Results: tests/results/<label>.json (and a short text summary on screen).
+tests/score.py. Results: tests/results/<label>.json (and a short text summary on screen). Before any case
+the runner checks that n8n runs the committed test copy (tests/n8n_match.py; else INVALID RUN) and records
+what ran: workflow hash, clean tree, reset, --only, visible and hold-out SHA-256, stray alerts.
 Exit 0 = the run completed (misses are results, not errors); 2 = test machinery failed (INVALID RUN).
 
 Needs: local n8n with the Q129 test copy pushed (python workflows/build.py --push), the fault proxy
@@ -192,15 +194,27 @@ def search_ids(obj, prop, value, op="EQ"):
 
 
 def count_after_visible(obj, record_id, searches):
-    """H2 count: union of the searches, once the record read by idProperty shows in search (<= 60 s)."""
-    end = time.time() + 60
-    ids = set()
-    while True:
-        ids = set()
+    """H2 count: union of the searches, once the record read by idProperty shows in search (<= 60 s).
+
+    Returns (ids, checked). checked is False when the record never showed in search: the H2 count did not
+    happen (R2 finding 8). With no record (count 0), searches twice, 10 s apart (search can lag).
+    """
+    def union():
+        out = set()
         for prop, value in searches:
-            ids |= set(search_ids(obj, prop, value))
-        if record_id is None or record_id in ids or time.time() > end:
-            return ids
+            out |= set(search_ids(obj, prop, value))
+        return out
+    if record_id is None:
+        ids = union()
+        time.sleep(10)
+        return ids | union(), True
+    end = time.time() + 60
+    while True:
+        ids = union()
+        if record_id in ids:
+            return ids, True
+        if time.time() > end:
+            return ids, False
         time.sleep(3)
 
 
@@ -361,6 +375,11 @@ def step_wait(ev):
     return 60 + extra
 
 
+def posted(a):
+    """An alert or summary row counts only when Slack took the message (R2 finding 2)."""
+    return bool(a.get("slack_ts")) and not a.get("slack_error")
+
+
 def norm_order(v):
     return "" if v in (None, "", "unknown") else str(v)
 
@@ -452,7 +471,17 @@ class Runner:
             self.run_group(cr, group, case_start)
             i += len(group)
         self.check_final(cr)
+        stray = self.stray_alerts(case_start)
+        if stray:
+            cr.miss("stray alerts", "miss", [], sorted(a.get("type") for a in stray))
         return cr
+
+    def stray_alerts(self, since=None):
+        """Alert rows (crash, attention, ...) that no step of a case claimed (R2 finding 9); claims them."""
+        out = [a for a in self.t.rows("q129_alerts") if a.get("type") in ALERT_TYPES
+               and a["id"] not in self.claimed_alerts and (since is None or str(a.get("at")) >= since)]
+        self.claimed_alerts.update(a["id"] for a in out)
+        return out
 
     def run_group(self, cr, group, case_start):
         cid = cr.case["id"]
@@ -522,6 +551,8 @@ class Runner:
             if not rows:
                 cr.miss(where + " summary", "H4", "summary message", "none recorded")
             else:
+                if not posted(rows[0]):
+                    cr.miss(where + " summary slack", "H4", "posted to Slack", rows[0].get("slack_error") or "no ts")
                 data = json.loads(rows[0].get("data") or "{}")
                 if data != exp.get("summary"):
                     cr.miss(where + " summary counts", "miss", exp.get("summary"), data)
@@ -555,6 +586,8 @@ class Runner:
             got += cr.wait_alert("crash", 0.5, after=cr.sent_at[step])
         for a in got:
             self.claimed_alerts.add(a["id"])
+            if not posted(a):
+                cr.miss(where + f" {a.get('type')} alert slack", "H4", "posted to Slack", a.get("slack_error") or "no ts")
         got_n = sorted(self.alert_key(a["type"], a.get("order_number"), a.get("reason")) for a in got)
         exp_n = sorted(self.alert_key(a["type"], a.get("order"), a.get("reason")) for a in exp["alerts"])
         if got_n != exp_n:
@@ -601,14 +634,16 @@ class Runner:
             where = f"final contact {c['email']}"
             rec = get_contact(c["email"])
             if c["count"] == 0:
-                ids = count_after_visible("contacts", None, [("email", c["email"])])
+                ids, _ = count_after_visible("contacts", None, [("email", c["email"])])
                 if rec is not None or ids:
                     cr.miss(where, "H3", "no contact", "exists")
                 continue
             if rec is None:
                 cr.miss(where, "H1", "contact", "missing")
                 continue
-            ids = count_after_visible("contacts", rec["id"], [("email", c["email"])])
+            ids, checked = count_after_visible("contacts", rec["id"], [("email", c["email"])])
+            if not checked:
+                cr.miss(where + " count", "miss", "H2 count by search", "record not in search after 60 s")
             if len(ids) > 1:
                 cr.miss(where + " count", "H2", 1, len(ids))
             props = rec.get("properties") or {}
@@ -625,14 +660,16 @@ class Runner:
             rec = get_deal(d["order_number"])
             searches = [("shop_order_id", d["order_number"]), ("dealname", "Order #" + d["order_number"])]
             if d["count"] == 0:
-                ids = count_after_visible("deals", None, searches)
+                ids, _ = count_after_visible("deals", None, searches)
                 if rec is not None or ids:
                     cr.miss(where, "H3", "no deal", "exists")
                 continue
             if rec is None:
                 cr.miss(where, "H1", "deal", "missing")
                 continue
-            ids = count_after_visible("deals", rec["id"], searches)
+            ids, checked = count_after_visible("deals", rec["id"], searches)
+            if not checked:
+                cr.miss(where + " count", "miss", "H2 count by search", "record not in search after 60 s")
             if len(ids) > 1:
                 cr.miss(where + " count", "H2", 1, len(ids))
             props = rec.get("properties") or {}
@@ -730,6 +767,20 @@ def secret_leaks(t, text):
     return found
 
 
+def sha256_file(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def tree_clean():
+    """No uncommitted change in the workflow source or the test tools (results files do not count)."""
+    try:
+        out = subprocess.run(["git", "status", "--porcelain", "--", "workflows", "tests", ":!tests/results"],
+                             cwd=ROOT, capture_output=True, text=True)
+    except OSError:
+        return False
+    return out.returncode == 0 and not out.stdout.strip()
+
+
 def git_head():
     try:
         return subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
@@ -766,6 +817,12 @@ def main():
                         want.add(dep)
                         stack.append(dep)
             cases = [c for c in cases if c["id"] in want]
+        from n8n_api import Api
+        from n8n_match import match
+        wf_hash, problems = match(Api())
+        if problems:
+            raise Invalid("n8n does not run the committed test copy (python tests/n8n_match.py): "
+                          + "; ".join(problems[:3]))
         proxy = ensure_proxy()
         r = Runner(a.label)
         if not a.no_reset:
@@ -784,6 +841,10 @@ def main():
             if not ok:
                 line += "  " + "; ".join(f"{m['where']} [{m['rule']}]" for m in cr.misses[:4])
             print(line, flush=True)
+        time.sleep(5)
+        stray = r.stray_alerts()
+        if stray:
+            print("stray alerts after the last case: " + ", ".join(sorted(x.get("type") for x in stray)), flush=True)
         counts = proxy_counts()
         logs = r.t.rows("q129_log")
         retries = 0
@@ -796,6 +857,10 @@ def main():
         secs = sorted(float(row.get("seconds") or 0) for row in logs if row.get("mode") == "webhook"
                       and row.get("result") in ("created", "updated"))
         doc = {"label": a.label, "started": started, "finished": iso_now(), "workflow_commit": git_head(),
+               "workflow_hash": wf_hash, "tree_clean": tree_clean(), "reset": not a.no_reset, "only": a.only,
+               "visible_sha256": sha256_file(ROOT / "tests" / "cases" / "visible.json"),
+               "holdout_sha256": sha256_file(Path(a.data) / "holdout.json") if a.data else None,
+               "stray_alerts": len(stray),
                "cases_run": len(results), "passed": sum(1 for x in results if x["pass"]),
                "hard_rule_breaks": sum(1 for x in results for m in x["misses"] if m["rule"].startswith("H")),
                "cases": results, "proxy_real_errors": counts.get("real_errors", []),

@@ -114,7 +114,46 @@ process.stdout.write(JSON.stringify(bodies.map((b) => checkAndClean(b))));
                                          f"  js    {json.dumps(g, ensure_ascii=False)[:400]}\n").encode("utf-8"))
     print(f"{len(bodies) - bad} of {len(bodies)} bodies agree ({len(bodies) - len(variants(base))} visible, "
           f"{len(variants(base))} variants)")
-    return 1 if bad else 0
+    guard_bad = ledger_guard()
+    return 1 if bad or guard_bad else 0
+
+
+def ledger_guard():
+    """The ledger rechecks (R2 finding 1): stop only when the ledger now holds a newer version; never write it back."""
+    v = "2026-10-01T10:00:00Z"
+    rows = {"none": [{}], "older": [{"id": 1, "version": "2026-10-01T09:00:00Z"}],
+            "same": [{"id": 1, "version": v}], "newer": [{"id": 1, "version": "2026-10-01T11:00:00Z"}]}
+    want = {"none": ("write", True), "older": ("write", True), "same": ("write", True), "newer": ("skip", False)}
+    run = lambda body: "(() => {" + body + "})()"  # noqa: E731
+    js = r"""
+const cases = JSON.parse(process.argv[2]);
+const out = {};
+for (const [k, rows] of Object.entries(cases)) {
+  const state = { order_number: 'HB-1', modified: '__V__', action: 'write', result: 'updated', data_hash: 'h' };
+  const $ = () => ({ first: () => ({ json: state }) });
+  const $input = { all: () => rows.map((json) => ({ json })) };
+  const a = __RECHECK__[0].json;
+  const b = __LEDGER__[0].json;
+  out[k] = [a.action, b.write, a.action === 'skip' ? a.result : null];
+}
+process.stdout.write(JSON.stringify(out));
+""".replace("__V__", v).replace("__RECHECK__", run(J.recheck("X"))).replace("__LEDGER__", run(J.LEDGER_ROW))
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / "guard.js"
+        p.write_text(js, encoding="utf-8")
+        r = subprocess.run(["node", str(p), json.dumps(rows)], capture_output=True)
+    if r.returncode != 0:
+        print(r.stderr.decode("utf-8", "replace"))
+        return 1
+    got = json.loads(r.stdout)
+    bad = 0
+    for k, (act, write) in want.items():
+        g = got[k]
+        if g[0] != act or g[1] != write or (act == "skip" and g[2] != "skipped_older"):
+            bad += 1
+            print(f"DIFF ledger guard {k}: want {act}/{write}, got {g}")
+    print(f"{len(want) - bad} of {len(want)} ledger guard checks agree")
+    return bad
 
 
 if __name__ == "__main__":

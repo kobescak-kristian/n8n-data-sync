@@ -27,7 +27,7 @@ return [{ json: {
   sig: String(one(h['x-wc-webhook-signature']) || ''),
   topic: one(h['x-wc-webhook-topic']) === undefined ? null : String(one(h['x-wc-webhook-topic'])),
   delivery_id: one(h['x-wc-webhook-delivery-id']) === undefined ? '' : String(one(h['x-wc-webhook-delivery-id'])),
-  request_id: String(one(h['x-q129-request-id']) || ''),
+  request_id: __TEST__ ? String(one(h['x-q129-request-id']) || '') : '',  // test hook only (R2 finding 7)
   test_crash: __TEST__ && one(h['x-q129-test-crash']) === 'yes',
   received_ms: Date.now(),
 }, binary: item.binary }];
@@ -262,9 +262,30 @@ return [{ json: S }];
 """.replace("__PREV__", prev_node).replace("__TARGET__", target).replace("__FIELD__", id_field)
 
 
+# Before each HubSpot write (R2 finding 1): read the ledger again. If a newer version landed while this
+# event ran, stop with skipped_older and write nothing more. One after the other, the ledger here is what
+# Decide read, so results do not change.
+def recheck(state_node):
+    return r"""
+const S = Object.assign({}, $('__STATE__').first().json);
+const rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);
+const led = rows.length ? rows[0] : null;
+if (led && led.version > S.modified) { S.action = 'skip'; S.result = 'skipped_older'; }
+return [{ json: S }];
+""".replace("__STATE__", state_node)
+
+
+# The ledger never moves back (R2 finding 1): write only when there is no row or its version is not newer.
 LEDGER_ROW = r"""
-const S = $input.first().json;
-return [{ json: { order_number: S.order_number, version: S.modified, data_hash: S.data_hash, updated_at: new Date().toISOString() } }];
+const S = $('After link').first().json;
+const rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);
+const led = rows.length ? rows[0] : null;
+return [{ json: { order_number: S.order_number, version: S.modified, data_hash: S.data_hash, updated_at: new Date().toISOString(),
+  write: !(led && led.version > S.modified) } }];
+"""
+
+SKIP_STATE = r"""
+return [{ json: Object.assign({}, $input.first().json) }];
 """
 
 # Which open rows this step closes (CASES.md 3.8): on created/updated every open row of the order with no

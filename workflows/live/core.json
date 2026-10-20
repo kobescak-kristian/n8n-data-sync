@@ -160,6 +160,86 @@
    }
   },
   {
+   "id": "0f23171e-cc7d-5b5b-90a6-0f0c12433b0c",
+   "name": "Recheck ledger 1",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    1560,
+    -510
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_ledger"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $('Decide').first().json.order_number }}"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "43596446-58b0-57a7-88a0-ab0ced35ed27",
+   "name": "Recheck 1",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1560,
+    -680
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nif (led && led.version > S.modified) { S.action = 'skip'; S.result = 'skipped_older'; }\nreturn [{ json: S }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "2de14c47-38e3-574e-91eb-90c26606f86d",
+   "name": "Still newest 1?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1560,
+    -850
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "2de14c47-38e3-574e-91eb-90c26606f86d",
+       "leftValue": "={{ $json.action === 'write' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
    "id": "a33d7882-8b93-595b-9c66-942cce2b30a0",
    "name": "Contact request",
    "type": "n8n-nodes-base.code",
@@ -226,6 +306,86 @@
      "conditions": [
       {
        "id": "e9a9c715-3d05-540d-bff8-fb94e3e4f016",
+       "leftValue": "={{ $json.action === 'write' }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
+   "id": "6575e1cb-e354-5b9f-b99a-31d647387b87",
+   "name": "Recheck ledger 2",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    2520,
+    -510
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_ledger"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $('After contact').first().json.order_number }}"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
+   "id": "4343cbde-e496-50ed-bccf-8d23f398e866",
+   "name": "Recheck 2",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2520,
+    -680
+   ],
+   "parameters": {
+    "jsCode": "const S = Object.assign({}, $('After contact').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nif (led && led.version > S.modified) { S.action = 'skip'; S.result = 'skipped_older'; }\nreturn [{ json: S }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "86730ce9-3e53-5e11-8985-e439d59a0744",
+   "name": "Still newest 2?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2520,
+    -850
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "86730ce9-3e53-5e11-8985-e439d59a0744",
        "leftValue": "={{ $json.action === 'write' }}",
        "rightValue": "",
        "operator": {
@@ -406,6 +566,37 @@
    }
   },
   {
+   "id": "dd3d81fb-d16d-5437-bdcb-94fd9312be08",
+   "name": "Recheck ledger 3",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    4440,
+    -510
+   ],
+   "parameters": {
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "q129_ledger"
+    },
+    "returnAll": true,
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "order_number",
+       "condition": "eq",
+       "keyValue": "={{ $('After link').first().json.order_number }}"
+      }
+     ]
+    }
+   },
+   "alwaysOutputData": true,
+   "executeOnce": true
+  },
+  {
    "id": "efbb99ed-7c64-55ef-bf7f-f723b71630b5",
    "name": "Ledger row",
    "type": "n8n-nodes-base.code",
@@ -415,7 +606,43 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = $input.first().json;\nreturn [{ json: { order_number: S.order_number, version: S.modified, data_hash: S.data_hash, updated_at: new Date().toISOString() } }];\n"
+    "jsCode": "const S = $('After link').first().json;\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nreturn [{ json: { order_number: S.order_number, version: S.modified, data_hash: S.data_hash, updated_at: new Date().toISOString(),\n  write: !(led && led.version > S.modified) } }];\n"
+   },
+   "executeOnce": true
+  },
+  {
+   "id": "90c67707-c5db-5149-8369-515662f9676d",
+   "name": "Ledger not newer?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    4680,
+    -510
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "90c67707-c5db-5149-8369-515662f9676d",
+       "leftValue": "={{ $json.write === true }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
    }
   },
   {
@@ -674,6 +901,20 @@
    }
   },
   {
+   "id": "4aec2e5f-2643-509f-83b6-5d70373f4966",
+   "name": "Skip state",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1800,
+    85
+   ],
+   "parameters": {
+    "jsCode": "return [{ json: Object.assign({}, $input.first().json) }];\n"
+   },
+   "executeOnce": true
+  },
+  {
    "id": "15ac2394-ac02-5636-ba24-51186fef14ca",
    "name": "Find open rows (skip)",
    "type": "n8n-nodes-base.dataTable",
@@ -696,7 +937,7 @@
       {
        "keyName": "order_number",
        "condition": "eq",
-       "keyValue": "={{ $('Decide').first().json.order_number }}"
+       "keyValue": "={{ $('Skip state').first().json.order_number }}"
       },
       {
        "keyName": "state",
@@ -719,7 +960,7 @@
     0
    ],
    "parameters": {
-    "jsCode": "const S = $('Decide').first().json;\nconst open = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null && j.state === 'open');\nconst replayId = S.replay ? String(S.replay.row_id) : null;\nconst out = [];\nconst at = new Date().toISOString();\nfor (const r of open) {\n  const mine = replayId !== null && String(r.id) === replayId;\n  const bySync = S.action === 'write' && r.order_number === S.order_number && (!r.version || r.version <= S.modified);\n  if (mine || bySync) out.push({ json: { row_id: r.id, state: 'closed', closed_by: mine ? 'replay' : 'sync', closed_at: at, closed_request: S.request_id } });\n}\nif (!out.length) out.push({ json: { row_id: -1, state: 'closed', closed_by: '', closed_at: at, closed_request: '' } });\nreturn out;\n"
+    "jsCode": "const S = $('Skip state').first().json;\nconst open = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null && j.state === 'open');\nconst replayId = S.replay ? String(S.replay.row_id) : null;\nconst out = [];\nconst at = new Date().toISOString();\nfor (const r of open) {\n  const mine = replayId !== null && String(r.id) === replayId;\n  const bySync = S.action === 'write' && r.order_number === S.order_number && (!r.version || r.version <= S.modified);\n  if (mine || bySync) out.push({ json: { row_id: r.id, state: 'closed', closed_by: mine ? 'replay' : 'sync', closed_at: at, closed_request: S.request_id } });\n}\nif (!out.length) out.push({ json: { row_id: -1, state: 'closed', closed_by: '', closed_at: at, closed_request: '' } });\nreturn out;\n"
    },
    "executeOnce": true
   },
@@ -811,7 +1052,7 @@
     0
    ],
    "parameters": {
-    "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst closed = $('Rows to close (skip)').all().map((i) => i.json).filter((j) => j.row_id !== -1).map((j) => j.row_id);\nS.closed_rows = closed;\nreturn [{ json: S }];\n"
+    "jsCode": "const S = Object.assign({}, $('Skip state').first().json);\nconst closed = $('Rows to close (skip)').all().map((i) => i.json).filter((j) => j.row_id !== -1).map((j) => j.row_id);\nS.closed_rows = closed;\nreturn [{ json: S }];\n"
    },
    "executeOnce": true
   },
@@ -1200,7 +1441,7 @@
    "main": [
     [
      {
-      "node": "Contact request",
+      "node": "Recheck ledger 1",
       "type": "main",
       "index": 0
      }
@@ -1208,6 +1449,46 @@
     [
      {
       "node": "Skip?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Recheck ledger 1": {
+   "main": [
+    [
+     {
+      "node": "Recheck 1",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Recheck 1": {
+   "main": [
+    [
+     {
+      "node": "Still newest 1?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Still newest 1?": {
+   "main": [
+    [
+     {
+      "node": "Contact request",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Skip state",
       "type": "main",
       "index": 0
      }
@@ -1251,7 +1532,7 @@
    "main": [
     [
      {
-      "node": "Deal request",
+      "node": "Recheck ledger 2",
       "type": "main",
       "index": 0
      }
@@ -1259,6 +1540,46 @@
     [
      {
       "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Recheck ledger 2": {
+   "main": [
+    [
+     {
+      "node": "Recheck 2",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Recheck 2": {
+   "main": [
+    [
+     {
+      "node": "Still newest 2?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Still newest 2?": {
+   "main": [
+    [
+     {
+      "node": "Deal request",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Skip state",
       "type": "main",
       "index": 0
      }
@@ -1353,7 +1674,7 @@
    "main": [
     [
      {
-      "node": "Ledger row",
+      "node": "Recheck ledger 3",
       "type": "main",
       "index": 0
      }
@@ -1367,11 +1688,40 @@
     ]
    ]
   },
+  "Recheck ledger 3": {
+   "main": [
+    [
+     {
+      "node": "Ledger row",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
   "Ledger row": {
    "main": [
     [
      {
+      "node": "Ledger not newer?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Ledger not newer?": {
+   "main": [
+    [
+     {
       "node": "Upsert ledger",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Find open rows",
       "type": "main",
       "index": 0
      }
@@ -1437,7 +1787,7 @@
    "main": [
     [
      {
-      "node": "Find open rows (skip)",
+      "node": "Skip state",
       "type": "main",
       "index": 0
      }
@@ -1445,6 +1795,17 @@
     [
      {
       "node": "Attention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Skip state": {
+   "main": [
+    [
+     {
+      "node": "Find open rows (skip)",
       "type": "main",
       "index": 0
      }
