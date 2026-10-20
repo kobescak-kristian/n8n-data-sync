@@ -2,7 +2,7 @@
 
 ## 0. Header
 
-- Version: v1.2, 2026-10-20
+- Version: v1.2.1, 2026-10-20
 - Status: LOCKED 2026-10-20 by Kristian Kobescak (owner: "approved.", after v1.1)
 - Owner: Kristian Kobescak
 - Build type: portfolio
@@ -67,7 +67,7 @@ Test tools: Python runner (signs and sends payloads, reads HubSpot and the table
 ```
 
 **Stack proposal:**
-- **n8n:** local 2.43.7, shared with other builds. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130. Never restart, upgrade or reconfigure n8n; never touch other builds' workflows or credentials. Full or gated runs only when no other build's series runs, announced in `n8n-usage.md` in the shared notes folder first.
+- **n8n:** local 2.43.7, shared with other builds. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130. Never restart, upgrade or reconfigure n8n; never touch other builds' workflows or credentials. Building in parallel is always fine. Before exclusive use (a full or gated test series, or anything that affects n8n as a whole): read `n8n-usage.md` in the shared notes; if another build has an open line (not DONE), wait for its "free" message; if not, add the line "IN USE Q-129 from HH:MM, expected end HH:MM, <what>" and send a one-line message to the other build sessions. When finished: mark the line DONE and send a one-line "n8n free" message. Messages only at start and end of exclusive use (owner rule, 2026-10-20). Session IDs of the other builds: in that shared notes folder or from the planning session.
 - **HubSpot:** the existing free demo account "Portfolio Demo" (made for Q-116, separate from the owner's real HubSpot; owner, 2026-10-20). This build adds 2 custom deal properties (`shop_order_id`, unique; `shop_modified_at`) and 1 contact property (`sync_source`). Its test records use only its own e-mail domains, and the reset touches only records with `sync_source = harbour-demo-shop`, so Q-116's contacts are never touched.
 - **Slack:** the existing demo workspace; new channel `#data-sync-alerts`.
 - **No AI provider, no Google, no new paid service.**
@@ -223,6 +223,7 @@ Open:
 
 ## 8. Version log
 
+- v1.2.1 2026-10-20: shared n8n coordination rule added to the stack line (owner's words, relayed by the planning session: "when one need exclusively for itself the platform, it needs to send messages to others and when it stop, again send the messages that it's free"). No other change.
 - v1.2 2026-10-20: owner approval ("approved."): decisions 1-4 locked; LOCKED; Q-129 registered (kristian-wiki 59405c2).
 - v1.1 2026-10-20: owner decisions: eval level Standard (critical failures CF1-CF5 become the hard rules H1-H5; red teams 2 instead of one per build phase; no safeguard line), HubSpot "Portfolio Demo", repo name `n8n-data-sync`.
 - v1.0 2026-10-20: first version, for owner review.
