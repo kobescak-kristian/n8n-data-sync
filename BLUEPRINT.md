@@ -2,13 +2,13 @@
 
 ## 0. Header
 
-- Version: v1.1, 2026-10-20
-- Status: DRAFT, for owner review (eval level, HubSpot account and repo name decided by the owner 2026-10-20; decisions 1-4 and LOCK open)
+- Version: v1.2, 2026-10-20
+- Status: LOCKED 2026-10-20 by Kristian Kobescak (owner: "approved.", after v1.1)
 - Owner: Kristian Kobescak
 - Build type: portfolio
 - Built by: Claude Code sessions, one phase per session; hold-out cases by a separate session that never builds; red teams by fresh sessions that never build.
 - Trigger: UPWORK_LAUNCH_PLAN.md item 4 ("Data sync with checks", the old Make P2 idea reshaped: no duplicates, no missing fields, alerts; owner 2026-10-18; build order 7, 6, 4).
-- Backlog: Q-129 proposed (next free in kristian-wiki BACKLOG.md on 2026-10-20; recheck and add the line at approval). All n8n names below use Q129.
+- Backlog: Q-129 (kristian-wiki 59405c2). All n8n names below use Q129.
 - Repo: `n8n-data-sync` (owner, 2026-10-20), private until the publish gate (publish is the owner's decision).
 - Timebox and budget: about 8-10 hours in 2 build sessions, plus 1 hold-out session and the red-team sessions. No fixed date: done when the quality bar (section 6, "Done") holds. Money: $0 (no AI step; HubSpot free, Slack free).
 
@@ -188,7 +188,7 @@ Visible total 67. Hold-out about 29 (at least 2 per kind; it brings every kind t
 
 | Phase | Delivers | Accept when (checkable) |
 |---|---|---|
-| P0 | scaffold (new-project), this blueprint | KOS-CONTROLS OK; blueprint LOCKED by the owner; Q-129 backlog line commit hash in STATE |
+| P0 | scaffold (new-project), this blueprint | done: ecf12bf, KOS-CONTROLS OK; LOCKED v1.2; Q-129 kristian-wiki 59405c2 |
 | P1 | eval gate: CASES.md, generator, 67 visible cases, config; no workflow | gate commit hash in STATE; `python tests/make_cases.py` exit 0, same SHA-256 twice; planted-mistake test exit 0 |
 | P1b | hold-out (separate session) + R1 red team of the gate (separate session) | `evals/holdout_commitment.json` committed, builder re-checks the archive SHA-256 without opening it; R1 report in the shared notes, every finding fixed or recorded |
 | P2 | owner creates the keys and the Slack app; first-hour check in n8n (waits for a free n8n slot) | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read. Or a fallback recorded in an ADR |
@@ -206,7 +206,7 @@ Visible total 67. Hold-out about 29 (at least 2 per kind; it brings every kind t
 
 ## 7. Decisions
 
-Proposed (become locked at owner approval):
+Locked (owner, 2026-10-20 plan approval; change only by a dated line in 8.):
 1. No AI step in v1 (2026-10-20). Every check here is a fixed rule, and code is cheaper, faster and testable to 100%. The README says "AI only where it helps" as a selling point. Rejected: an AI step that cleans messy fields (adds cost, a rate claim, and a new way to write wrong values).
 2. Upsert by key for every write, ledger plus HubSpot unique property (2026-10-20). Rejected: search before create (HubSpot search can lag a few seconds behind writes, so two quick events can still make a duplicate).
 3. Fix at source, replay for outages (2026-10-20). A failed order is fixed in the shop, and the shop's update closes the row; replay is only for CRM outages. Rejected: an edit form for the payload (a second place where data is typed by hand, and more to test).
@@ -217,10 +217,12 @@ Decided (owner, 2026-10-20):
 6. HubSpot: the existing "Portfolio Demo" account, separated from Q-116 as in 3. Rejected: a new HubSpot account.
 7. Repo name `n8n-data-sync`. Rejected: `n8n-ai-data-sync` (there is no AI step).
 
-Open (owner, at plan review):
-- Decisions 1-4 as proposed, and LOCK.
+Open:
+- n8n slot for P2-P5: owner says when n8n is free (P1 and P1b need no n8n).
+- Owner creates the keys, Slack app and secret in the table in 3. before P2.
 
 ## 8. Version log
 
+- v1.2 2026-10-20: owner approval ("approved."): decisions 1-4 locked; LOCKED; Q-129 registered (kristian-wiki 59405c2).
 - v1.1 2026-10-20: owner decisions: eval level Standard (critical failures CF1-CF5 become the hard rules H1-H5; red teams 2 instead of one per build phase; no safeguard line), HubSpot "Portfolio Demo", repo name `n8n-data-sync`.
 - v1.0 2026-10-20: first version, for owner review.
