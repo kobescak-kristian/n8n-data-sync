@@ -1,0 +1,120 @@
+# Eval gate: n8n data sync with checks (Q-129, Upwork portfolio item 4)
+# Committed before any workflow code (eval-gate hard rule 1). The workflow is
+# built against this gate, never the reverse. Frozen once committed (eval-gate
+# section 7): cases and expected results, grading, level, runs. A change applies
+# only to the next version, by a new dated version of this file and a note in
+# evals/RESULTS.md; the old version stays in git history.
+version: 1
+date: 2026-10-20
+plan: "BLUEPRINT.md v1.2 (LOCKED 2026-10-20), section 5"
+rules: tests/CASES.md
+procedure: "eval-gate skill; kristian-os EVAL_STANDARD.md"
+
+eval_level:
+  proposed: "Critical (writes customer and order records into the CRM with no person checking each write; deal amounts feed sales reports)"
+  decided: "Standard, owner, 2026-10-20 (CRM records keep a history and can be undone; shop and accounting stay the money truth)"
+  client_note: "If a client's HubSpot amounts feed invoicing or accounting, the level for that client is Critical (README limit)."
+
+# --- Gate ---
+gate: >-
+  PASS iff, in each of 3 full runs over visible + hold-out cases on one frozen
+  workflow commit, every gated case gives its expected result (every check in
+  tests/CASES.md section 6 passes) AND hard_rule_breaks == 0 AND secret_leaks == 0.
+  The result reports the worst run and every case that changed between runs.
+  Any miss in any run = FAIL.
+
+no_rate_claim: >-
+  There is no AI step, so every check is a code check: a miss is a bug and the
+  eval-gate section 3 rate table does not apply. No % claim anywhere.
+
+thresholds:
+  gated_cases_pass_per_run: "all (every gated case, every run)"
+  hard_rule_breaks_max: 0       # H1-H5, counted per case per run
+  secret_leaks_max: 0
+  runs: 3
+  allowed_misses: 0
+
+# --- Metrics (one sentence each) ---
+positive_class: "A case passes when every expected value of every step and of its end state matches (tests/CASES.md 5.3, 5.5, 6)."
+metrics:
+  case_pass: >-
+    For one run, a case passes iff, for every step, the HTTP code, result (one of the listed values), reasons,
+    alerts, attention-row effect, closed rows, hubspot_unchanged (when true), CRM write attempts (when faults are
+    set) and summary counts equal expect, and after the last step the HubSpot contacts and deals (count, every
+    field, links), ledger rows, attention rows and alerts equal expected_final.
+  hard_rule_breaks: >-
+    Number of misses the scorer names H1 (wrong HubSpot value or link), H2 (more than one contact per e-mail,
+    deal or ledger row per order number), H3 (a change where hubspot_unchanged is true, or a record expected with
+    count 0 exists), H4 (missing log row, attention row, alert or summary), H5 (a stored value replaced by a blank
+    or by a value of an older version of the same order), by the rule in tests/CASES.md 3.14.
+  secret_leaks: >-
+    Number of places where the webhook secret, the HubSpot key or the replay password appears in any log row,
+    ledger row, attention row, recorded Slack text or results file (string search by the runner).
+  run_to_run_changes: "Cases whose pass/fail or any graded value differs between the 3 runs, listed by id."
+
+grading:
+  method: "code only (BLUEPRINT section 5); no LLM, no person grades a case"
+  reads: >-
+    After each case: HubSpot API (contacts by e-mail, deals by shop_order_id, their properties and links),
+    n8n data tables q129_ledger, q129_attention, q129_log, and what the workflows recorded they sent to Slack
+    (text + Slack message ID). Slack is not read.
+  simulated: "Cases with faults or force_crash are labelled simulated in the results (fault proxy port 8130)."
+
+comparison_policy:
+  amounts: "exact decimal equality (1250.5 == 1250.50); no rounding tolerance"
+  dates: "same UTC instant to the second (order_date = date_created_gmt, modified = date_modified_gmt)"
+  text: "exact, byte for byte after the cleaning in tests/CASES.md 3.3; HubSpot empty or null equals ''"
+  emails: "lower case, exact"
+  stage: "deal stage label of the default pipeline, mapped to the stage ID by the runner"
+  results: "the actual result must be one of the listed values (more than one only for parallel events)"
+  property_names: "logical fields map to HubSpot properties by tests/CASES.md 3.4; P2 confirms the names; a changed name is an ADR, not a case change"
+
+secondary_reported_not_gated:
+  seconds_per_order: "median and worst seconds from request to log row, per run"
+  hubspot_calls_per_order: "HubSpot requests per order event, from the fault proxy count"
+  retries_per_run: "total retries per run, from the log"
+
+# --- Dataset ---
+dataset:
+  provenance: >-
+    Synthetic. Made-up shop Harbour E-Bikes, made-up customers and orders; e-mails only on subdomains of
+    harbour-sync.example.com (visible) and harbour-sync-h.example.com (hold-out). No real business data (F-112).
+    Payloads in the WooCommerce REST API v3 order shape, checked on 2026-10-20 against
+    https://woocommerce.github.io/woocommerce-rest-api-docs/#orders (source commit 9315664) and
+    class-wc-webhook.php (signature, ping, body encoding); see tests/CASES.md section 1.
+  visible_set:
+    generator: tests/make_cases.py
+    file: tests/cases/visible.json
+    cases: 67   # N5 M8 E6 U6 D6 F7 V7 A6 T6 R5 S5 (BLUEPRINT section 5)
+    events: 114
+    order_numbers: "41001-48999"
+    deterministic: "no clock, no random numbers; two runs give the same SHA-256 (STATE.md P1 entry)"
+    self_check: >-
+      Every generator run checks the whole set and stops, writing nothing, on duplicate case IDs, an order
+      number or e-mail shared between cases not marked related, a missing or late dependency, an unknown expected
+      value, or an expected value that disagrees with the reference model of tests/CASES.md.
+      tests/test_make_cases.py plants each mistake and checks that it stops.
+  hold_out_set:
+    share: "about 30% of all cases (about 29 with 67 visible; at least 2 per kind)"
+    author: "a separate session that never builds and never opens the visible cases; from tests/CASES.md only"
+    order_numbers: "61001-69999"
+    check: "python tests/make_cases.py --check <file> --set holdout, before sealing"
+    commitment: "evals/holdout_commitment.json (case count, count per kind and per result, archive SHA-256), committed before the workflow build"
+    opening: "at the gated runs: check the archive SHA-256 against the commitment, extract to a new empty folder, stop on any shared case ID or order number with the visible set; a mismatch voids the hold-out result"
+
+# --- Runs ---
+runs:
+  count: 3
+  scope: "visible + hold-out, one frozen workflow commit, reset (archive this build's HubSpot records, empty q129_* tables) before each run"
+  order: "cases one at a time in file order; events in step order; parallel groups sent at the same moment"
+  why_3: "the owner's test standard asks 3 runs; real HubSpot timing can differ between runs (BLUEPRINT section 5)"
+  dry_run: "2 cases through the full path before the first full run; runner exit 0; not a result"
+  build_checks: "interaction sweep, generator self-check and evals/PREFLIGHT.md before the first gated run; red teams R1 (this gate, before P3) and R2 (the build, before the first gated run)"
+  shared_n8n: "exclusive use announced in n8n-usage.md and by message to the other build sessions (BLUEPRINT section 3)"
+  recording: "every run appended to evals/RESULTS.md, pass or fail, never edited (eval-gate rules 2-4)"
+  done: "results artifact committed AND runner exit code 0"
+
+# --- Claims ---
+claims:
+  allowed: "'on my test set of N made-up WooCommerce orders, 0 duplicates and 0 wrong values in 3 runs', worst run, from a committed RESULTS.md entry only"
+  not_measured: "real shops, high volume, webhooks that never arrive, Slack delivery itself, n8n Cloud"
