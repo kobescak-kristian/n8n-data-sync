@@ -12,7 +12,6 @@
    ],
    "parameters": {
     "authentication": "basicAuth",
-    "path": "q129-replay",
     "formTitle": "Replay a needs-attention row",
     "formDescription": "Use this after a HubSpot outage. Orders that failed a field check are fixed in the shop.",
     "formFields": {
@@ -30,7 +29,9 @@
      ]
     },
     "responseMode": "onReceived",
-    "options": {}
+    "options": {
+     "path": "q129-replay"
+    }
    },
    "credentials": {
     "httpBasicAuth": {

@@ -375,11 +375,12 @@ def build_replay(live):
     if not live:
         fields.append({"fieldType": "hiddenField", "fieldName": "request_id"})  # test hook only (R2 finding 7)
     w.add("Replay form", "n8n-nodes-base.formTrigger", 2.4, {
-        "authentication": "basicAuth", "path": "q129-replay",
+        "authentication": "basicAuth",
         "formTitle": "Replay a needs-attention row",
         "formDescription": "Use this after a HubSpot outage. Orders that failed a field check are fixed in the shop.",
         "formFields": {"values": fields},
-        "responseMode": "onReceived", "options": {}}, 0, cred="httpBasicAuth",
+        # Form Trigger 2.2+ reads the path from options (n8n 2.43.7 FormTriggerV2; a top-level path is ignored)
+        "responseMode": "onReceived", "options": {"path": "q129-replay"}}, 0, cred="httpBasicAuth",
         webhookId=str(uuid.uuid5(uuid.NAMESPACE_URL, "q129/q129-replay")))
     code(w, "Replay request", J.REPLAY_REQUEST, 1)
     get_rows(w, "Find row", "q129_attention", 2, filters=[cond("id", "={{ $json.row_id }}")], executeOnce=True)
