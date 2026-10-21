@@ -83,3 +83,9 @@ previous entry | secondary metrics | cost.
   hard-rule breaks 0 | secret leaks 0 | real HubSpot errors 0 | no misses. With dev-3 (61 of 62) and dev-3c
   (S02) every visible case has now passed once on the R2-fixed build, in 3 separate runs (not one full
   run). n8n exclusive slot 08:02-08:05 | cost $0.
+- **2026-10-21 08:08-08:28 | DEVELOPMENT, not gated** | config v2 | workflows of 79176ee (runner at 62b631d;
+  n8n match exit 0, workflow hash ca708c8b...; clean tree; reset) | visible set d4df6410... | `dev-4`: all 67
+  visible cases | runner exit 0 | 67 of 67 passed | hard-rule breaks 0 | secret leaks 0 | real HubSpot
+  errors 0 | stray alerts 0 | no misses | median 2.1 s and worst 19.1 s from request to log row for synced
+  orders; 15 retries (simulated faults); 200 HubSpot requests through the fault proxy | n8n exclusive slot
+  08:08-08:29 (n8n-usage.md) | cost $0. First full visible run on the R2-fixed build (P4 needs 3 in a row).
