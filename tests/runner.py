@@ -12,7 +12,7 @@ Exit 0 = the run completed (misses are results, not errors); 2 = test machinery 
 
 Needs: local n8n with the Q129 test copy pushed (python workflows/build.py --push), the fault proxy
 (tests/proxy.py; started here when it is not running), and in the git-ignored .env: N8N_URL, N8N_API_KEY,
-HUBSPOT_TOKEN, Q129_WEBHOOK_SECRET, Q129_REPLAY_PASSWORD. Secrets are never printed or written.
+HUBSPOT_TOKEN, Q129_WEBHOOK_SECRET, REPLAY_PASSWORD. Secrets are never printed or written.
 Shared-account rules: HubSpot records are archived only when they are this build's (sync_source
 harbour-demo-shop and an e-mail on harbour-sync(-h).example.com; deals with a shop_order_id); n8n tables
 q129_* only.
@@ -306,9 +306,9 @@ def send_webhook(ev, rid):
 
 
 def send_replay(row_id, rid):
-    pw = ENV.get("Q129_REPLAY_PASSWORD")
+    pw = ENV.get("REPLAY_PASSWORD")
     if not pw:
-        raise Invalid("Q129_REPLAY_PASSWORD missing in .env (the replay form login, user replay)")
+        raise Invalid("REPLAY_PASSWORD missing in .env (the replay form login, user replay)")
     boundary = "q129" + uuid.uuid4().hex
     parts = []
     for name, value in (("field-0", str(row_id)), ("field-1", rid)):
@@ -759,7 +759,7 @@ def load_cases(data):
 
 
 def secret_leaks(t, text):
-    secrets = [ENV.get(k) for k in ("Q129_WEBHOOK_SECRET", "HUBSPOT_TOKEN", "Q129_REPLAY_PASSWORD") if ENV.get(k)]
+    secrets = [ENV.get(k) for k in ("Q129_WEBHOOK_SECRET", "HUBSPOT_TOKEN", "REPLAY_PASSWORD") if ENV.get(k)]
     found = 0
     blobs = [text] + [json.dumps(r) for tab in TABLES for r in t.rows(tab)]
     for s in secrets:
