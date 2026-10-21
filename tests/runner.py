@@ -3,6 +3,7 @@
     python tests/runner.py --label visible-1                 # all visible cases (resets first)
     python tests/runner.py --label dry-1 --only N01,T01      # some cases (resets first)
     python tests/runner.py --label gated-1 --data <folder>   # visible + the hold-out file in <folder>
+    python tests/runner.py --label sweep-1 --sweep           # interaction sweep (tests/cases/sweep.json), not gated
 
 Grading follows tests/CASES.md sections 5-6 and evals/eval_config.yaml; the gate verdict over 3 runs is
 tests/score.py. Results: tests/results/<label>.json (and a short text summary on screen). Before any case
@@ -298,6 +299,8 @@ def send_webhook(ev, rid):
     sign = ev.get("sign")
     if sign == "valid":
         h["X-WC-Webhook-Signature"] = wc_sign(body, secret)
+    elif sign == "empty":  # sweep SW20: header present, value empty
+        h["X-WC-Webhook-Signature"] = ""
     elif sign == "wrong_secret":
         h["X-WC-Webhook-Signature"] = wc_sign(body, "another-secret-" + secret[:4])
     elif sign == "tampered":
@@ -475,7 +478,16 @@ class Runner:
                     group.append(events[i + len(group)])
             self.run_group(cr, group, case_start)
             i += len(group)
+        n = len(cr.misses)
         self.check_final(cr)
+        if len(cr.misses) > n and case.get("limit_final"):  # sweep: does the README-limit end state match?
+            final_misses = cr.misses[n:]
+            del cr.misses[n:]
+            self.check_final(cr, case["limit_final"])
+            if len(cr.misses) == n:
+                cr.limit = final_misses
+            else:
+                cr.misses[n:] = final_misses
         stray = self.stray_alerts(case_start)
         if stray:
             cr.miss("stray alerts", "miss", [], sorted(a.get("type") for a in stray))
@@ -492,7 +504,7 @@ class Runner:
         cid = cr.case["id"]
         first = group[0]
         label = f"{cid}:{first['step']}"
-        proxy_control(label, first.get("faults") if len(group) == 1 else None)
+        proxy_control(label, first.get("faults"))  # a group's faults sit on its first event (sweep only)
         want_unchanged = any(ev["expect"].get("hubspot_unchanged") for ev in group)
         before = snapshot(cr.orders, cr.emails) if want_unchanged else None
         rows_before = {r["id"]: r for r in self.t.rows("q129_attention")}
@@ -520,6 +532,7 @@ class Runner:
 
             def go(ev):
                 barrier.wait()
+                time.sleep(ev.get("delay_s") or 0)  # sweep: sent N s after the group starts, no log wait
                 send(ev)
             ts = [threading.Thread(target=go, args=(ev,)) for ev in group]
             for t in ts:
@@ -634,8 +647,8 @@ class Runner:
                 return s
         return rid
 
-    def check_final(self, cr):
-        fin = cr.case["expected_final"]
+    def check_final(self, cr, fin=None):
+        fin = fin or cr.case["expected_final"]
         older = self.older_values(cr)
         for c in fin["contacts"]:
             where = f"final contact {c['email']}"
@@ -751,8 +764,8 @@ class Runner:
 
 # ------------------------------------------------------------------------------------------------ main
 
-def load_cases(data):
-    doc = json.loads((ROOT / "tests" / "cases" / "visible.json").read_text(encoding="utf-8"))
+def load_cases(data, sweep=False):
+    doc = json.loads((ROOT / "tests" / "cases" / ("sweep.json" if sweep else "visible.json")).read_text(encoding="utf-8"))
     cases = doc["cases"]
     if data:
         hdoc = json.loads((Path(data) / "holdout.json").read_text(encoding="utf-8"))
@@ -803,7 +816,11 @@ def main():
     ap.add_argument("--only", help="comma-separated case IDs (their depends_on cases are added)")
     ap.add_argument("--data", help="folder with the extracted hold-out file holdout.json")
     ap.add_argument("--no-reset", action="store_true")
+    ap.add_argument("--sweep", action="store_true", help="run the interaction sweep (development, not gated)")
     a = ap.parse_args()
+    if a.sweep and a.data:
+        print("INVALID RUN: --sweep runs without the hold-out")
+        return 2
     for k in ("N8N_API_KEY", "HUBSPOT_TOKEN", "Q129_WEBHOOK_SECRET"):
         if not ENV.get(k):
             print(f"INVALID RUN: {k} missing in .env")
@@ -813,7 +830,7 @@ def main():
     started = iso_now()
     proxy = None
     try:
-        cases = load_cases(a.data)
+        cases = load_cases(a.data, a.sweep)
         if a.only:
             want = set(a.only.split(","))
             by_id = {c["id"]: c for c in cases}
@@ -841,10 +858,14 @@ def main():
             t0 = time.time()
             cr = r.run_case(c)
             ok = not cr.misses
-            results.append({"id": c["id"], "kind": c["kind"], "set": "holdout" if c["id"].startswith("H-") else "visible",
+            limit = getattr(cr, "limit", None)
+            outcome = "OBSERVE" if c.get("observe") and not ok else "LIMIT" if ok and limit else "PASS" if ok else "MISS"
+            results.append({"id": c["id"], "kind": c["kind"], "set": "sweep" if a.sweep else "holdout" if c["id"].startswith("H-") else "visible",
                             "simulated": c.get("simulated", False), "pass": ok, "misses": cr.misses,
                             "seconds": round(time.time() - t0, 1), "step_seconds": cr.seconds})
-            line = f"{c['id']:7} {'PASS' if ok else 'MISS'} {round(time.time() - t0, 1):6}s"
+            if a.sweep:
+                results[-1].update(outcome=outcome, limit_misses=limit)
+            line = f"{c['id']:7} {outcome if a.sweep else 'PASS' if ok else 'MISS'} {round(time.time() - t0, 1):6}s"
             if not ok:
                 line += "  " + "; ".join(f"{m['where']} [{m['rule']}]" for m in cr.misses[:4])
             print(line, flush=True)
@@ -867,6 +888,8 @@ def main():
                "workflow_hash": wf_hash, "tree_clean": tree_clean(), "reset": not a.no_reset, "only": a.only,
                "visible_sha256": sha256_file(ROOT / "tests" / "cases" / "visible.json"),
                "holdout_sha256": sha256_file(Path(a.data) / "holdout.json") if a.data else None,
+               "set": "sweep" if a.sweep else "visible+holdout" if a.data else "visible",
+               "sweep_sha256": sha256_file(ROOT / "tests" / "cases" / "sweep.json") if a.sweep else None,
                "stray_alerts": len(stray),
                "cases_run": len(results), "passed": sum(1 for x in results if x["pass"]),
                "hard_rule_breaks": sum(1 for x in results for m in x["misses"] if m["rule"].startswith("H")),

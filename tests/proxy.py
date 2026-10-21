@@ -7,13 +7,16 @@ the key), except the upsert requests of a step that has faults:
   POST /crm/v3/objects/contacts/batch/upsert  (target "contacts")
   POST /crm/v3/objects/deals/batch/upsert     (target "deals")
 The n-th upsert request of a target in a step gets the n-th response of its fault list; after the list,
-every request passes. Responses: pass, 429, 429:<seconds>, 500, 502, 503, 504, 400, 401, 403, 404 (answered
+every request passes. Interaction sweep only (tests/make_sweep.py): target "link" is the deal-contact link
+  POST /crm/v4/associations/deals/contacts/batch/associate/default  (target "link")
+counted apart in link_seen, so "seen" and "forwarded" still count contact and deal upserts only.
+Responses: pass, 429, 429:<seconds>, 500, 502, 503, 504, 400, 401, 403, 404 (answered
 here, not forwarded), timeout (not forwarded, never answered), timeout_after_forward (forwarded, the answer
 held past the 15 s timeout of the workflow), close (connection closed, not forwarded).
 
 Control (local test runner only):
   POST /__control  {"step": "<label>", "faults": {...} | null}   starts a new step, counters to 0
-  GET  /__counts   {"step", "seen": {...}, "forwarded": {...}, "real_errors": [...]}
+  GET  /__counts   {"step", "seen": {...}, "forwarded": {...}, "link_seen", "real_errors": [...]}
 Real non-2xx answers from HubSpot are kept in real_errors (time, path, status) so a miss caused by HubSpot
 itself can be explained in evals/RESULTS.md.
 """
@@ -29,12 +32,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 PORT = 8130
 UPSTREAM = "https://api.hubapi.com"
 TARGETS = {"/crm/v3/objects/contacts/batch/upsert": "contacts", "/crm/v3/objects/deals/batch/upsert": "deals"}
+LINK_PATH = "/crm/v4/associations/deals/contacts/batch/associate/default"
 HOLD_SECONDS = 20
 FORWARD_HEADERS = ("authorization", "content-type", "accept")
 
 lock = threading.Lock()
 state = {"step": None, "faults": {}, "seen": {"contacts": 0, "deals": 0},
-         "forwarded": {"contacts": 0, "deals": 0}, "requests": 0, "real_errors": []}
+         "forwarded": {"contacts": 0, "deals": 0}, "link_seen": 0, "requests": 0, "real_errors": []}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -87,10 +91,12 @@ class Handler(BaseHTTPRequestHandler):
                 state["faults"] = d.get("faults") or {}
                 state["seen"] = {"contacts": 0, "deals": 0}
                 state["forwarded"] = {"contacts": 0, "deals": 0}
+                state["link_seen"] = 0
             self._send(200, {"ok": True})
         elif self.path == "/__counts":
             with lock:
-                self._send(200, {k: state[k] for k in ("step", "seen", "forwarded", "requests", "real_errors")})
+                self._send(200, {k: state[k] for k in ("step", "seen", "forwarded", "link_seen", "requests",
+                                                       "real_errors")})
         else:
             self._send(404, {"error": "unknown control path"})
 
@@ -110,6 +116,11 @@ class Handler(BaseHTTPRequestHandler):
                 answer = seq[n - 1] if n <= len(seq) else "pass"
                 if answer in ("pass", "timeout_after_forward"):
                     state["forwarded"][target] += 1
+            elif self.command == "POST" and path == LINK_PATH:
+                state["link_seen"] += 1
+                seq = state["faults"].get("link") or []
+                n = state["link_seen"]
+                answer = seq[n - 1] if n <= len(seq) else "pass"
         if answer == "pass":
             status, data, headers = self._forward(body)
             return self._send(status, data, headers)
