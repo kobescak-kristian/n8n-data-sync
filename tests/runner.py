@@ -99,8 +99,13 @@ def hs(method, path, body=None, params=None):
     url = HS + path + ("?" + urllib.parse.urlencode(params, doseq=True) if params else "")
     for attempt in range(5):
         _pace()
-        s, raw = http(method, url, body, {"Authorization": "Bearer " + ENV["HUBSPOT_TOKEN"],
-                                          "Content-Type": "application/json", "Accept": "application/json"})
+        try:
+            s, raw = http(method, url, body, {"Authorization": "Bearer " + ENV["HUBSPOT_TOKEN"],
+                                              "Content-Type": "application/json", "Accept": "application/json"})
+        except OSError:  # network glitch on the runner's own read (dev-3b: SSL bad record mac); try again
+            s = 0
+            time.sleep(2 + attempt * 2)
+            continue
         if s == 429 or s >= 500:
             time.sleep(2 + attempt * 2)
             continue
