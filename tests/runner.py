@@ -553,6 +553,8 @@ class Runner:
             else:
                 if not posted(rows[0]):
                     cr.miss(where + " summary slack", "H4", "posted to Slack", rows[0].get("slack_error") or "no ts")
+                if any(a["type"] == "over_5" for a in exp["alerts"]):
+                    cr.wait_alert("over_5", limit, rid=rid)  # saved after the summary row (dev-3 S02)
                 data = json.loads(rows[0].get("data") or "{}")
                 if data != exp.get("summary"):
                     cr.miss(where + " summary counts", "miss", exp.get("summary"), data)
