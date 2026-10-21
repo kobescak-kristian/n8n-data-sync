@@ -1,0 +1,445 @@
+{
+ "label": "dev-r2",
+ "started": "2026-10-21T01:25:47.747Z",
+ "finished": "2026-10-21T01:34:04.516Z",
+ "workflow_commit": "79176ee",
+ "workflow_hash": "ca708c8b329ab4cc376e85f2d104140e2da76508599dec653fbed033029a2e26",
+ "tree_clean": true,
+ "reset": true,
+ "only": "R01,R02,R03,R04,R05",
+ "visible_sha256": "d4df64103d3d36bea17c57c67aac88e7cb48c4f738ff47e70855d041fc6e9b9d",
+ "holdout_sha256": null,
+ "stray_alerts": 0,
+ "cases_run": 5,
+ "passed": 1,
+ "hard_rule_breaks": 23,
+ "cases": [
+  {
+   "id": "R01",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": false,
+   "misses": [
+    {
+     "where": "step 2 http",
+     "rule": "miss",
+     "expected": 200,
+     "actual": 401
+    },
+    {
+     "where": "step 2 log row",
+     "rule": "H4",
+     "expected": "log row",
+     "actual": "none within 60 s"
+    },
+    {
+     "where": "step 2 result",
+     "rule": "H4",
+     "expected": [
+      "created"
+     ],
+     "actual": null
+    },
+    {
+     "where": "step 2 closed rows",
+     "rule": "miss",
+     "expected": [
+      1
+     ],
+     "actual": []
+    },
+    {
+     "where": "final contact lana.perkovic@mail.harbour-sync.example.com",
+     "rule": "H1",
+     "expected": "contact",
+     "actual": "missing"
+    },
+    {
+     "where": "final deal 41901",
+     "rule": "H1",
+     "expected": "deal",
+     "actual": "missing"
+    },
+    {
+     "where": "final ledger 41901",
+     "rule": "H4",
+     "expected": 1,
+     "actual": 0
+    },
+    {
+     "where": "final attention rows",
+     "rule": "miss",
+     "expected": [
+      {
+       "from_step": 1,
+       "order": "41901",
+       "reason": "crm_retry_exhausted",
+       "reasons": [
+        "crm_retry_exhausted"
+       ],
+       "state": "closed",
+       "closed_by": "replay",
+       "closed_at_step": 2,
+       "replays": 0
+      }
+     ],
+     "actual": [
+      {
+       "from_step": 1,
+       "order": "41901",
+       "reason": "crm_retry_exhausted",
+       "reasons": [
+        "crm_retry_exhausted"
+       ],
+       "state": "open",
+       "closed_by": null,
+       "closed_at_step": null,
+       "replays": 0
+      }
+     ]
+    }
+   ],
+   "seconds": 77.7,
+   "step_seconds": {
+    "1": 12.7,
+    "2": 61.5
+   }
+  },
+  {
+   "id": "R02",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": false,
+   "misses": [
+    {
+     "where": "step 2 http",
+     "rule": "miss",
+     "expected": 200,
+     "actual": 401
+    },
+    {
+     "where": "step 2 log row",
+     "rule": "H4",
+     "expected": "log row",
+     "actual": "none within 60 s"
+    },
+    {
+     "where": "step 2 result",
+     "rule": "H4",
+     "expected": [
+      "created"
+     ],
+     "actual": null
+    },
+    {
+     "where": "step 2 closed rows",
+     "rule": "miss",
+     "expected": [
+      1
+     ],
+     "actual": []
+    },
+    {
+     "where": "step 3 http",
+     "rule": "miss",
+     "expected": 200,
+     "actual": 401
+    },
+    {
+     "where": "step 3 log row",
+     "rule": "H4",
+     "expected": "log row",
+     "actual": "none within 60 s"
+    },
+    {
+     "where": "step 3 result",
+     "rule": "H4",
+     "expected": [
+      "replay_refused"
+     ],
+     "actual": null
+    },
+    {
+     "where": "final deal 41902",
+     "rule": "H1",
+     "expected": "deal",
+     "actual": "missing"
+    },
+    {
+     "where": "final ledger 41902",
+     "rule": "H4",
+     "expected": 1,
+     "actual": 0
+    },
+    {
+     "where": "final attention rows",
+     "rule": "miss",
+     "expected": [
+      {
+       "from_step": 1,
+       "order": "41902",
+       "reason": "crm_retry_exhausted",
+       "reasons": [
+        "crm_retry_exhausted"
+       ],
+       "state": "closed",
+       "closed_by": "replay",
+       "closed_at_step": 2,
+       "replays": 0
+      }
+     ],
+     "actual": [
+      {
+       "from_step": 1,
+       "order": "41902",
+       "reason": "crm_retry_exhausted",
+       "reasons": [
+        "crm_retry_exhausted"
+       ],
+       "state": "open",
+       "closed_by": null,
+       "closed_at_step": null,
+       "replays": 0
+      }
+     ]
+    }
+   ],
+   "seconds": 141.6,
+   "step_seconds": {
+    "1": 15.0,
+    "2": 61.5,
+    "3": 60.9
+   }
+  },
+  {
+   "id": "R03",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": false,
+   "misses": [
+    {
+     "where": "step 3 http",
+     "rule": "miss",
+     "expected": 200,
+     "actual": 401
+    },
+    {
+     "where": "step 3 log row",
+     "rule": "H4",
+     "expected": "log row",
+     "actual": "none within 60 s"
+    },
+    {
+     "where": "step 3 result",
+     "rule": "H4",
+     "expected": [
+      "replay_refused"
+     ],
+     "actual": null
+    }
+   ],
+   "seconds": 83.6,
+   "step_seconds": {
+    "1": 14.1,
+    "2": 3.8,
+    "3": 60.9
+   }
+  },
+  {
+   "id": "R04",
+   "kind": "R",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 13.1,
+   "step_seconds": {
+    "1": 3.1,
+    "2": 5.9
+   }
+  },
+  {
+   "id": "R05",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": false,
+   "misses": [
+    {
+     "where": "step 2 http",
+     "rule": "miss",
+     "expected": 200,
+     "actual": 401
+    },
+    {
+     "where": "step 2 log row",
+     "rule": "H4",
+     "expected": "log row",
+     "actual": "none within 84 s"
+    },
+    {
+     "where": "step 2 result",
+     "rule": "H4",
+     "expected": [
+      "needs_attention"
+     ],
+     "actual": null
+    },
+    {
+     "where": "step 2 alerts",
+     "rule": "H4",
+     "expected": [
+      [
+       "replay_failed",
+       "41905",
+       "crm_retry_exhausted"
+      ]
+     ],
+     "actual": []
+    },
+    {
+     "where": "step 2 replayed row",
+     "rule": "H4",
+     "expected": "open, replays +1",
+     "actual": {
+      "state": "open",
+      "replays": 0
+     }
+    },
+    {
+     "where": "step 2 crm_write_attempts",
+     "rule": "miss",
+     "expected": {
+      "contacts": 3,
+      "deals": 0
+     },
+     "actual": {
+      "contacts": 0,
+      "deals": 0
+     }
+    },
+    {
+     "where": "step 3 http",
+     "rule": "miss",
+     "expected": 200,
+     "actual": 401
+    },
+    {
+     "where": "step 3 log row",
+     "rule": "H4",
+     "expected": "log row",
+     "actual": "none within 60 s"
+    },
+    {
+     "where": "step 3 result",
+     "rule": "H4",
+     "expected": [
+      "created"
+     ],
+     "actual": null
+    },
+    {
+     "where": "step 3 closed rows",
+     "rule": "miss",
+     "expected": [
+      1
+     ],
+     "actual": []
+    },
+    {
+     "where": "final contact denis.bosnjak@post.harbour-sync.example.com",
+     "rule": "H1",
+     "expected": "contact",
+     "actual": "missing"
+    },
+    {
+     "where": "final deal 41905",
+     "rule": "H1",
+     "expected": "deal",
+     "actual": "missing"
+    },
+    {
+     "where": "final ledger 41905",
+     "rule": "H4",
+     "expected": 1,
+     "actual": 0
+    },
+    {
+     "where": "final attention rows",
+     "rule": "miss",
+     "expected": [
+      {
+       "from_step": 1,
+       "order": "41905",
+       "reason": "crm_retry_exhausted",
+       "reasons": [
+        "crm_retry_exhausted"
+       ],
+       "state": "closed",
+       "closed_by": "replay",
+       "closed_at_step": 3,
+       "replays": 1
+      }
+     ],
+     "actual": [
+      {
+       "from_step": 1,
+       "order": "41905",
+       "reason": "crm_retry_exhausted",
+       "reasons": [
+        "crm_retry_exhausted"
+       ],
+       "state": "open",
+       "closed_by": null,
+       "closed_at_step": null,
+       "replays": 0
+      }
+     ]
+    },
+    {
+     "where": "final alerts",
+     "rule": "H4",
+     "expected": [
+      [
+       1,
+       "attention",
+       "41905",
+       "crm_retry_exhausted"
+      ],
+      [
+       2,
+       "replay_failed",
+       "41905",
+       "crm_retry_exhausted"
+      ]
+     ],
+     "actual": [
+      [
+       1,
+       "attention",
+       "41905",
+       "crm_retry_exhausted"
+      ]
+     ]
+    }
+   ],
+   "seconds": 161.5,
+   "step_seconds": {
+    "1": 12.2,
+    "2": 84.5,
+    "3": 60.4
+   }
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 4.8,
+  "worst_seconds_sync": 4.8,
+  "retries": 8,
+  "hubspot_requests_via_proxy": 20
+ },
+ "secret_leaks": 0
+}

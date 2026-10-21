@@ -40,3 +40,46 @@ previous entry | secondary metrics | cost.
   19.3 s from request to log row for synced orders; 5 retries (simulated faults);
   168 HubSpot requests through the fault proxy | n8n exclusive slot 00:02-00:11
   (n8n-usage.md) | cost $0.
+- **2026-10-21 02:34-03:04 | DEVELOPMENT, not gated** | config v2 | workflows of commit 362f3e1 (R2 fixes;
+  pushed 02:25; `tests/n8n_match.py` exit 0, workflow hash 4e9a7829...; later commits changed only
+  tests/runner.py) | visible set d4df6410... |
+  - `dev-3` (62 of 67 visible cases, all except R01-R05; runner commit 23cca44, clean tree, reset): runner
+    exit 0 | 61 of 62 passed | hard-rule breaks 2 (both H4, both S02) | secret leaks 0 | real HubSpot
+    errors 0 | stray alerts after the last case 0. Miss analysis: S02 step 7 alerts and final alerts
+    missed the `over_5` alert, and the new stray-alert check found it in the same case: the workflow sent
+    and saved it, but after the summary row, and the runner read the step's alerts before it was saved.
+    A runner timing hole, not a workflow fault (dev-2 passed S02 by timing). Fix 57f50f8: the runner waits
+    for the over-5 alert of a summary step that expects one. Secondary: median 4.5 s (dev-2 2.4 s; the 3
+    ledger rechecks add data-table reads) and worst 19.6 s from request to log row for synced orders;
+    5 retries (simulated faults); 168 HubSpot requests through the fault proxy.
+  - `dev-3b` (S02 again): INVALID RUN, the runner crashed on an SSL error in its own HubSpot read
+    (`SSLV3_ALERT_BAD_RECORD_MAC`). Fix bf6e15d: the runner retries its own HubSpot calls after a
+    network error.
+  - `dev-3c` (S02 again, runner bf6e15d): runner exit 0 | 1 of 1 passed | hard-rule breaks 0 | secret
+    leaks 0.
+  - `dev-r1` (R01-R05): INVALID RUN twice (02:26 and 03:04), `REPLAY_PASSWORD` not found in `.env`; no
+    case sent.
+  - n8n exclusive slot 02:34-03:05 (n8n-usage.md) | cost $0.
+- **2026-10-21 03:13-03:35 | DEVELOPMENT, not gated** | config v2 | visible set d4df6410... | R01-R05 only |
+  - `dev-r1` (workflows of 362f3e1, runner bf6e15d+23cca44): runner exit 0 | 1 of 5 passed (R04, which has
+    no replay step) | every replay request got HTTP 404 | hard-rule breaks 23 (all follow from the 404: no
+    log row, no result) | secret leaks 0. Miss analysis: real bug (R2 finding 5, "the replay path has never
+    run"): Form Trigger 2.4 reads its path from `options.path`; the build put it at the top level, so n8n
+    registered the form under its random webhook ID (n8n 2.43.7 FormTriggerV2, `webhook_entity`). Fix
+    79176ee, pushed; n8n now lists `q129-replay` (GET, POST); `tests/n8n_match.py` exit 0.
+  - `dev-r2` (workflows of 79176ee): runner exit 0 | 1 of 5 passed (R04) | every replay request got HTTP
+    401 | hard-rule breaks 23 (all follow from the 401) | secret leaks 0. Miss analysis: the form is found;
+    its Basic Auth login refuses user `replay` with `REPLAY_PASSWORD` from `.env`, so the n8n credential
+    `Replay n8n-data-sync` has another user name or password. Owner step.
+  - n8n exclusive slot 03:13-03:35 (n8n-usage.md) | cost $0.
+- **2026-10-21 06:07-06:16 | DEVELOPMENT, not gated** | config v2 | workflows of 79176ee | `dev-r3` (R01-R05):
+  runner exit 0 | 1 of 5 passed (R04) | every replay request got HTTP 401 again | hard-rule breaks 23 (all
+  follow from the 401) | secret leaks 0. The owner edited the credential at 04:05; n8n now shows its name as
+  `replay n8n-data-sync` (the form still uses it by ID). Next: owner checks the credential's User and Password
+  fields and puts the name back. n8n exclusive slot 06:07-06:16 | cost $0.
+- **2026-10-21 08:02-08:05 | DEVELOPMENT, not gated** | config v2 | workflows of 79176ee (n8n match exit 0 at
+  the runner start) | visible set d4df6410... | `dev-r4` (R01-R05; owner fixed the credential `Replay
+  n8n-data-sync`: name, User `replay`, Password = `REPLAY_PASSWORD`): runner exit 0 | 5 of 5 passed |
+  hard-rule breaks 0 | secret leaks 0 | real HubSpot errors 0 | no misses. With dev-3 (61 of 62) and dev-3c
+  (S02) every visible case has now passed once on the R2-fixed build, in 3 separate runs (not one full
+  run). n8n exclusive slot 08:02-08:05 | cost $0.

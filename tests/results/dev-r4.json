@@ -1,0 +1,94 @@
+{
+ "label": "dev-r4",
+ "started": "2026-10-21T06:02:42.738Z",
+ "finished": "2026-10-21T06:04:46.578Z",
+ "workflow_commit": "79176ee",
+ "workflow_hash": "ca708c8b329ab4cc376e85f2d104140e2da76508599dec653fbed033029a2e26",
+ "tree_clean": true,
+ "reset": true,
+ "only": "R01,R02,R03,R04,R05",
+ "visible_sha256": "d4df64103d3d36bea17c57c67aac88e7cb48c4f738ff47e70855d041fc6e9b9d",
+ "holdout_sha256": null,
+ "stray_alerts": 0,
+ "cases_run": 5,
+ "passed": 5,
+ "hard_rule_breaks": 0,
+ "cases": [
+  {
+   "id": "R01",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 20.6,
+   "step_seconds": {
+    "1": 11.7,
+    "2": 4.5
+   }
+  },
+  {
+   "id": "R02",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 22.4,
+   "step_seconds": {
+    "1": 13.1,
+    "2": 3.6,
+    "3": 1.5
+   }
+  },
+  {
+   "id": "R03",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 22.4,
+   "step_seconds": {
+    "1": 13.1,
+    "2": 3.7,
+    "3": 1.5
+   }
+  },
+  {
+   "id": "R04",
+   "kind": "R",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 8.9,
+   "step_seconds": {
+    "1": 1.5,
+    "2": 3.6
+   }
+  },
+  {
+   "id": "R05",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 31.8,
+   "step_seconds": {
+    "1": 11.6,
+    "2": 11.6,
+    "3": 3.4
+   }
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 3.0,
+  "worst_seconds_sync": 3.0,
+  "retries": 10,
+  "hubspot_requests_via_proxy": 32
+ },
+ "secret_leaks": 0
+}
