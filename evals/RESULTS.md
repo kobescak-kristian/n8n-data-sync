@@ -89,3 +89,12 @@ previous entry | secondary metrics | cost.
   errors 0 | stray alerts 0 | no misses | median 2.1 s and worst 19.1 s from request to log row for synced
   orders; 15 retries (simulated faults); 200 HubSpot requests through the fault proxy | n8n exclusive slot
   08:08-08:29 (n8n-usage.md) | cost $0. First full visible run on the R2-fixed build (P4 needs 3 in a row).
+- **2026-10-21 08:41-09:42 | P4 VISIBLE RUNS, labelled not gated** | config v2 | workflows of 79176ee (runner at
+  26f94bd; n8n match exit 0 at each start, one workflow hash ca708c8b... in all 3; clean tree; reset before each)
+  | visible set d4df6410... | `vis-1`, `vis-2`, `vis-3`: all 67 visible cases each, one after the other |
+  runner exit 0 three times | 67 of 67 passed in each run | hard-rule breaks 0 | secret leaks 0 | real
+  HubSpot errors 0 | stray alerts 0 | cases that changed between runs: none | median 2.1 / 2.2 / 2.1 s and
+  worst 19.1 / 19.3 / 19.2 s from request to log row for synced orders; 15 retries per run (simulated
+  faults); 200 HubSpot requests per run through the fault proxy. `python tests/score.py` on the 3 files:
+  exit 1, only for the hold-out checks (no hold-out in a visible run, as expected); every other gate check
+  met. P4 item "3 full visible runs in a row meet the gate" met. n8n exclusive slot 08:41-09:42 | cost $0.
