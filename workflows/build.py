@@ -183,7 +183,8 @@ def error_workflow(w):
 # ------------------------------------------------------------------------------------------------ workflows
 
 def build_hubspot_call(live):
-    """One HubSpot write (POST, JSON body) with the CASES.md 3.7 retry rules, unrolled to 3 attempts."""
+    """One HubSpot write (POST, JSON body) with the CASES.md 3.7 retry rules, unrolled to 3 attempts. After each retry
+    wait the ledger is read again; a newer version there stops the retry (owner decision 2026-10-22, sweep SW02)."""
     w = WF("hubspot-call", "Q129 HubSpot call", live)
     trigger(w)
 
@@ -199,25 +200,39 @@ def build_hubspot_call(live):
             x, y, cred="hubspotAppToken", onError="continueRegularOutput")
         code(w, f"Check {n}", J.check_try(n), x + 1, y)
 
+    def recheck_after_wait(n, x, y):
+        get_rows(w, f"Recheck ledger after wait {n}", "q129_ledger", x, y,
+                 filters=[cond("order_number", "={{ $('Start').first().json.order_number }}")], executeOnce=True)
+        code(w, f"Recheck after wait {n}", J.recheck_wait(n), x + 1, y, executeOnce=True)
+        if_true(w, f"Still newest after wait {n}?", "={{ $json.skip !== true }}", x + 2, y)
+
     attempt(1, 1, 0)
     if_true(w, "Retry 1?", "={{ $json.done === false }}", 3, 0)
     w.add("Wait 1", "n8n-nodes-base.wait", 1.1, {"resume": "timeInterval", "amount": "={{ $json.wait }}",
                                                  "unit": "seconds"}, 4, 1,
           webhookId=str(uuid.uuid5(uuid.NAMESPACE_URL, "q129/hubspot-call/wait1")))
-    attempt(2, 5, 1)
-    if_true(w, "Retry 2?", "={{ $json.done === false }}", 7, 1)
+    recheck_after_wait(1, 5, 1)
+    attempt(2, 8, 1)
+    if_true(w, "Retry 2?", "={{ $json.done === false }}", 10, 1)
     w.add("Wait 2", "n8n-nodes-base.wait", 1.1, {"resume": "timeInterval", "amount": "={{ $json.wait }}",
-                                                 "unit": "seconds"}, 8, 2,
+                                                 "unit": "seconds"}, 11, 2,
           webhookId=str(uuid.uuid5(uuid.NAMESPACE_URL, "q129/hubspot-call/wait2")))
-    attempt(3, 9, 2)
-    code(w, "Result", "return $input.all();", 11, 0)
+    recheck_after_wait(2, 12, 2)
+    attempt(3, 15, 2)
+    code(w, "Result", "return $input.all();", 17, 0)
     w.chain("Start", "Try 1", "Check 1", "Retry 1?")
     w.link("Retry 1?", "Wait 1", 0)
     w.link("Retry 1?", "Result", 1)
-    w.chain("Wait 1", "Try 2", "Check 2", "Retry 2?")
+    w.chain("Wait 1", "Recheck ledger after wait 1", "Recheck after wait 1", "Still newest after wait 1?")
+    w.link("Still newest after wait 1?", "Try 2", 0)
+    w.link("Still newest after wait 1?", "Result", 1)
+    w.chain("Try 2", "Check 2", "Retry 2?")
     w.link("Retry 2?", "Wait 2", 0)
     w.link("Retry 2?", "Result", 1)
-    w.chain("Wait 2", "Try 3", "Check 3", "Result")
+    w.chain("Wait 2", "Recheck ledger after wait 2", "Recheck after wait 2", "Still newest after wait 2?")
+    w.link("Still newest after wait 2?", "Try 3", 0)
+    w.link("Still newest after wait 2?", "Result", 1)
+    w.chain("Try 3", "Check 3", "Result")
     return w
 
 
@@ -237,7 +252,8 @@ def build_core(live):
     if_true(w, "Write?", "={{ $json.action === 'write' }}", 6, -1)
 
     # write path: contact, deal, link (CASES.md 3.7), then ledger and closed rows (3.5, 3.8); the ledger is read
-    # again before each HubSpot write and before the ledger write (R2 finding 1)
+    # again before each HubSpot write and before the ledger write (R2 finding 1), and inside HubSpot call after each
+    # retry wait (SW02); a skip from there goes to the skip path through "Skip?"
     get_rows(w, "Recheck ledger 1", "q129_ledger", 6.5, -3,
              filters=[cond("order_number", "={{ $('Decide').first().json.order_number }}")], executeOnce=True)
     code(w, "Recheck 1", J.recheck("Decide"), 6.5, -4, executeOnce=True)
@@ -318,16 +334,16 @@ def build_core(live):
     w.link("Still newest 1?", "Skip state", 1)
     w.chain("Contact request", "Write contact", "After contact", "Contact ok?")
     w.link("Contact ok?", "Recheck ledger 2", 0)
-    w.link("Contact ok?", "Attention", 1)
+    w.link("Contact ok?", "Skip?", 1)
     w.chain("Recheck ledger 2", "Recheck 2", "Still newest 2?")
     w.link("Still newest 2?", "Deal request", 0)
     w.link("Still newest 2?", "Skip state", 1)
     w.chain("Deal request", "Write deal", "After deal", "Deal ok?")
     w.link("Deal ok?", "Link request", 0)
-    w.link("Deal ok?", "Attention", 1)
+    w.link("Deal ok?", "Skip?", 1)
     w.chain("Link request", "Write link", "After link", "Link ok?")
     w.link("Link ok?", "Recheck ledger 3", 0)
-    w.link("Link ok?", "Attention", 1)
+    w.link("Link ok?", "Skip?", 1)
     w.chain("Recheck ledger 3", "Ledger row", "Ledger not newer?")
     w.link("Ledger not newer?", "Upsert ledger", 0)
     w.link("Ledger not newer?", "Find open rows", 1)

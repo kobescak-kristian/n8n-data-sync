@@ -115,7 +115,8 @@ process.stdout.write(JSON.stringify(bodies.map((b) => checkAndClean(b))));
     print(f"{len(bodies) - bad} of {len(bodies)} bodies agree ({len(bodies) - len(variants(base))} visible, "
           f"{len(variants(base))} variants)")
     guard_bad = ledger_guard()
-    return 1 if bad or guard_bad else 0
+    wait_bad = retry_wait_guard()
+    return 1 if bad or guard_bad or wait_bad else 0
 
 
 def ledger_guard():
@@ -153,6 +154,50 @@ process.stdout.write(JSON.stringify(out));
             bad += 1
             print(f"DIFF ledger guard {k}: want {act}/{write}, got {g}")
     print(f"{len(want) - bad} of {len(want)} ledger guard checks agree")
+    return bad
+
+
+def retry_wait_guard():
+    """The ledger read after a retry wait (SW02): stop only on a newer version; Core then ends skipped_older."""
+    v = "2026-10-01T10:00:00Z"
+    rows = {"none": [{}], "older": [{"id": 1, "version": "2026-10-01T09:00:00Z"}],
+            "same": [{"id": 1, "version": v}], "newer": [{"id": 1, "version": "2026-10-01T11:00:00Z"}]}
+    want = {"none": "retry", "older": "retry", "same": "retry", "newer": "skip"}
+    run = lambda body: "(() => {" + body + "})()"  # noqa: E731
+    js = r"""
+const cases = JSON.parse(process.argv[2]);
+const out = {};
+for (const [k, rows] of Object.entries(cases)) {
+  const nodes = { 'Start': { order_number: 'HB-1', version: '__V__' },
+    'Check 1': { done: false, ok: false, attempts: 1, status: 429, reason: null, wait: 5 },
+    'X': { order_number: 'HB-1', modified: '__V__', action: 'write', result: 'updated' } };
+  const $ = (n) => ({ first: () => ({ json: nodes[n] }) });
+  let $input = { all: () => rows.map((json) => ({ json })) };
+  const w = __WAIT__[0].json;
+  $input = { first: () => ({ json: w }) };
+  const a = __AFTER__[0].json;
+  out[k] = [w.skip === true ? 'skip' : 'retry', w.done, a.action, a.result];
+}
+process.stdout.write(JSON.stringify(out));
+""".replace("__V__", v).replace("__WAIT__", run(J.recheck_wait(1))).replace(
+        "__AFTER__", run(J.after_call("X", "deals", "deal_id")))
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / "wait.js"
+        p.write_text(js, encoding="utf-8")
+        r = subprocess.run(["node", str(p), json.dumps(rows)], capture_output=True)
+    if r.returncode != 0:
+        print(r.stderr.decode("utf-8", "replace"))
+        return 1
+    got = json.loads(r.stdout)
+    bad = 0
+    for k, w in want.items():
+        g = got[k]
+        ok = (g[:3] == ["skip", True, "skip"] and g[3] == "skipped_older") if w == "skip" else \
+            (g[:2] == ["retry", False] and g[2] == "attention")
+        if not ok:
+            bad += 1
+            print(f"DIFF retry wait {k}: want {w}, got {g}")
+    print(f"{len(want) - bad} of {len(want)} retry-wait checks agree")
     return bad
 
 
