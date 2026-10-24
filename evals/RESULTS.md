@@ -98,3 +98,10 @@ previous entry | secondary metrics | cost.
   faults); 200 HubSpot requests per run through the fault proxy. `python tests/score.py` on the 3 files:
   exit 1, only for the hold-out checks (no hold-out in a visible run, as expected); every other gate check
   met. P4 item "3 full visible runs in a row meet the gate" met. n8n exclusive slot 08:41-09:42 | cost $0.
+
+- **2026-10-22 01:10-01:20 | DEVELOPMENT, not gated (interaction sweep)** | workflows of 79176ee (hash ca708c8b..., n8n match exit 0) | sweep set e78351bd... (b6550b2) | `sweep-1`: runner exit 0, reset, tree clean | 14 of 17 (PASS 13, LIMIT 1, OBSERVE 1, MISS 2) | 0 stray alerts, 0 secret leaks | results `tests/results/sweep-1.json`
+  - SW01 LIMIT: v2 then v1 1 s later; the deal shows v1 (stage, modified), ledger v2: the README limit (owner 2026-10-21).
+  - SW02 MISS (H5): v1's deal write got 429 (5 s wait); the retry inside "HubSpot call" runs after the recheck, so v1 overwrote v2 about 5 s later; deal shows v1, ledger v2. Longer than the "about 2 seconds" README limit: owner decision.
+  - SW03 MISS: v1 and v2 at the same moment; HubSpot answered 404 to one contact upsert (proxy real error at SW03:1), so v2 ended `needs_attention` `crm_bad_request` (row + alert); deal and ledger stay v1 until the next update. Not silent (H4 kept), but a real parallel-upsert answer the CASES retry rule does not cover.
+  - SW19 OBSERVE: `HB-71190` and `hb-71190` became 2 deals, and a HubSpot search by `shop_order_id` finds both for either value (case-insensitive search): version 2 input.
+  - Every other case passed: SW04 (one contact, 2 linked deals), SW05-SW09, SW11-SW14 (262144 bytes 200, 262145 bytes 413), SW18 (BOM -> not_json; raw UTF-8 synced exactly), SW20 (empty signature 401), SW21 (link failure -> needs-attention, resend closes the row). SW08 took 13.8 s (waits 0 s and 10 s, as CASES 3.7).
