@@ -262,7 +262,7 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v3/objects/contacts/batch/upsert',\n  body: { inputs: [{ idProperty: 'email', id: S.email, properties: S.contact_props }] } } }];\n"
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v3/objects/contacts/batch/upsert',\n  order_number: S.order_number, version: S.modified, body: { inputs: [{ idProperty: 'email', id: S.email, properties: S.contact_props }] } } }];\n"
    }
   },
   {
@@ -296,7 +296,7 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('contacts' !== 'link') S.attempts['contacts'] = r.attempts || 0;\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('contact_id') S['contact_id'] = String(res.id || '');\nreturn [{ json: S }];\n"
+    "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('contacts' !== 'link') S.attempts['contacts'] = r.attempts || 0;\nif (r.skip === true) { S.action = 'skip'; S.result = 'skipped_older'; return [{ json: S }]; }\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('contact_id') S['contact_id'] = String(res.id || '');\nreturn [{ json: S }];\n"
    }
   },
   {
@@ -424,7 +424,7 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v3/objects/deals/batch/upsert',\n  body: { inputs: [{ idProperty: 'shop_order_id', id: S.order_number, properties: S.deal_props }] } } }];\n"
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v3/objects/deals/batch/upsert',\n  order_number: S.order_number, version: S.modified, body: { inputs: [{ idProperty: 'shop_order_id', id: S.order_number, properties: S.deal_props }] } } }];\n"
    }
   },
   {
@@ -458,7 +458,7 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = Object.assign({}, $('After contact').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('deals' !== 'link') S.attempts['deals'] = r.attempts || 0;\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('deal_id') S['deal_id'] = String(res.id || '');\nreturn [{ json: S }];\n"
+    "jsCode": "const S = Object.assign({}, $('After contact').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('deals' !== 'link') S.attempts['deals'] = r.attempts || 0;\nif (r.skip === true) { S.action = 'skip'; S.result = 'skipped_older'; return [{ json: S }]; }\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('deal_id') S['deal_id'] = String(res.id || '');\nreturn [{ json: S }];\n"
    }
   },
   {
@@ -506,7 +506,7 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v4/associations/deals/contacts/batch/associate/default',\n  body: { inputs: [{ from: { id: S.deal_id }, to: { id: S.contact_id } }] } } }];\n"
+    "jsCode": "const S = $input.first().json;\nreturn [{ json: { base: 'http://127.0.0.1:8130', path: '/crm/v4/associations/deals/contacts/batch/associate/default',\n  order_number: S.order_number, version: S.modified, body: { inputs: [{ from: { id: S.deal_id }, to: { id: S.contact_id } }] } } }];\n"
    }
   },
   {
@@ -540,7 +540,7 @@
     -340
    ],
    "parameters": {
-    "jsCode": "const S = Object.assign({}, $('After deal').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('link' !== 'link') S.attempts['link'] = r.attempts || 0;\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('') S[''] = String(res.id || '');\nreturn [{ json: S }];\n"
+    "jsCode": "const S = Object.assign({}, $('After deal').first().json);\nconst r = $input.first().json || {};\nS.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});\nif ('link' !== 'link') S.attempts['link'] = r.attempts || 0;\nif (r.skip === true) { S.action = 'skip'; S.result = 'skipped_older'; return [{ json: S }]; }\nif (!r.ok) {\n  S.action = 'attention'; S.result = 'needs_attention';\n  S.reasons = [r.reason || 'crm_retry_exhausted'];\n  S.crm_error = String(r.error || '').slice(0, 300);\n  return [{ json: S }];\n}\nconst res = ((r.body || {}).results || [])[0] || {};\nif ('') S[''] = String(res.id || '');\nreturn [{ json: S }];\n"
    }
   },
   {
@@ -1563,7 +1563,7 @@
     ],
     [
      {
-      "node": "Attention",
+      "node": "Skip?",
       "type": "main",
       "index": 0
      }
@@ -1654,7 +1654,7 @@
     ],
     [
      {
-      "node": "Attention",
+      "node": "Skip?",
       "type": "main",
       "index": 0
      }
@@ -1705,7 +1705,7 @@
     ],
     [
      {
-      "node": "Attention",
+      "node": "Skip?",
       "type": "main",
       "index": 0
      }

@@ -227,19 +227,19 @@ return [{ json: S }];
 CONTACT_REQUEST = r"""
 const S = $input.first().json;
 return [{ json: { base: '__BASE__', path: '/crm/v3/objects/contacts/batch/upsert',
-  body: { inputs: [{ idProperty: 'email', id: S.email, properties: S.contact_props }] } } }];
+  order_number: S.order_number, version: S.modified, body: { inputs: [{ idProperty: 'email', id: S.email, properties: S.contact_props }] } } }];
 """
 
 DEAL_REQUEST = r"""
 const S = $input.first().json;
 return [{ json: { base: '__BASE__', path: '/crm/v3/objects/deals/batch/upsert',
-  body: { inputs: [{ idProperty: 'shop_order_id', id: S.order_number, properties: S.deal_props }] } } }];
+  order_number: S.order_number, version: S.modified, body: { inputs: [{ idProperty: 'shop_order_id', id: S.order_number, properties: S.deal_props }] } } }];
 """
 
 LINK_REQUEST = r"""
 const S = $input.first().json;
 return [{ json: { base: '__BASE__', path: '/crm/v4/associations/deals/contacts/batch/associate/default',
-  body: { inputs: [{ from: { id: S.deal_id }, to: { id: S.contact_id } }] } } }];
+  order_number: S.order_number, version: S.modified, body: { inputs: [{ from: { id: S.deal_id }, to: { id: S.contact_id } }] } } }];
 """
 
 
@@ -250,6 +250,7 @@ const S = Object.assign({}, $('__PREV__').first().json);
 const r = $input.first().json || {};
 S.attempts = Object.assign({ contacts: 0, deals: 0 }, S.attempts || {});
 if ('__TARGET__' !== 'link') S.attempts['__TARGET__'] = r.attempts || 0;
+if (r.skip === true) { S.action = 'skip'; S.result = 'skipped_older'; return [{ json: S }]; }
 if (!r.ok) {
   S.action = 'attention'; S.result = 'needs_attention';
   S.reasons = [r.reason || 'crm_retry_exhausted'];
@@ -407,6 +408,19 @@ else if (status === 401 || status === 403) { out.reason = 'crm_auth_error'; retu
 else { out.reason = 'crm_bad_request'; return [{ json: out }]; }
 if (retry && n < 3) { out.done = false; return [{ json: out }]; }
 out.reason = 'crm_retry_exhausted';
+return [{ json: out }];
+""".replace("__N__", str(n))
+
+
+# After each retry wait, before the retry write (owner decision 2026-10-22, sweep SW02): read the ledger again.
+# If a newer version landed during the wait, write nothing more; Core ends the event skipped_older.
+def recheck_wait(n):
+    return r"""
+const R = $('Start').first().json;
+const out = Object.assign({}, $('Check __N__').first().json);
+const rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);
+const led = rows.length ? rows[0] : null;
+if (led && led.version > R.version) { out.done = true; out.skip = true; out.reason = 'skipped_older'; }
 return [{ json: out }];
 """.replace("__N__", str(n))
 
