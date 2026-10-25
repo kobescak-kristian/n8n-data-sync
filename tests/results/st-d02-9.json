@@ -1,0 +1,41 @@
+{
+ "label": "st-d02-9",
+ "started": "2026-10-25T01:10:53.781Z",
+ "finished": "2026-10-25T01:11:18.692Z",
+ "workflow_commit": "8973aff",
+ "workflow_hash": "40a6c88937278ba026cb28669621da0ff33c82b3c43c0d4239b19a5f5d9d6866",
+ "tree_clean": true,
+ "reset": true,
+ "only": "D02",
+ "visible_sha256": "d4df64103d3d36bea17c57c67aac88e7cb48c4f738ff47e70855d041fc6e9b9d",
+ "holdout_sha256": null,
+ "set": "visible",
+ "sweep_sha256": null,
+ "stray_alerts": 0,
+ "cases_run": 1,
+ "passed": 1,
+ "hard_rule_breaks": 0,
+ "cases": [
+  {
+   "id": "D02",
+   "kind": "D",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 7.5,
+   "step_seconds": {
+    "1": 4.8,
+    "2": 4.9
+   }
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 4.2,
+  "worst_seconds_sync": 4.2,
+  "retries": 0,
+  "hubspot_requests_via_proxy": 6
+ },
+ "secret_leaks": 0
+}

@@ -1,0 +1,77 @@
+{
+ "label": "st-sw-1",
+ "started": "2026-10-25T01:11:51.450Z",
+ "finished": "2026-10-25T01:12:31.273Z",
+ "workflow_commit": "8973aff",
+ "workflow_hash": "40a6c88937278ba026cb28669621da0ff33c82b3c43c0d4239b19a5f5d9d6866",
+ "tree_clean": true,
+ "reset": true,
+ "only": "SW03,SW04",
+ "visible_sha256": "d4df64103d3d36bea17c57c67aac88e7cb48c4f738ff47e70855d041fc6e9b9d",
+ "holdout_sha256": null,
+ "set": "sweep",
+ "sweep_sha256": "e78351bd5983e40d7c70d294862a6caaabc55d0d49ccbc18ae0d490ea6611c2a",
+ "stray_alerts": 0,
+ "cases_run": 2,
+ "passed": 1,
+ "hard_rule_breaks": 2,
+ "cases": [
+  {
+   "id": "SW03",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": false,
+   "misses": [
+    {
+     "where": "final deal 71030 stage",
+     "rule": "H1",
+     "expected": "Closed Won",
+     "actual": "Appointment Scheduled"
+    },
+    {
+     "where": "final deal 71030 modified",
+     "rule": "H1",
+     "expected": "2026-10-17T07:40:00Z",
+     "actual": "2026-10-17T07:20:06Z"
+    },
+    {
+     "where": "final ledger 71030 version",
+     "rule": "miss",
+     "expected": "2026-10-17T07:40:00Z",
+     "actual": "2026-10-17T07:20:06Z"
+    }
+   ],
+   "seconds": 11.3,
+   "step_seconds": {
+    "1": 6.3,
+    "2": 6.4
+   },
+   "outcome": "MISS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW04",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 11.4,
+   "step_seconds": {
+    "1": 6.4,
+    "2": 6.6
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 5.6,
+  "worst_seconds_sync": 6.0,
+  "retries": 0,
+  "hubspot_requests_via_proxy": 12
+ },
+ "secret_leaks": 0
+}

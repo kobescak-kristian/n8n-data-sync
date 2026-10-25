@@ -1,0 +1,78 @@
+{
+ "label": "st-sw-2",
+ "started": "2026-10-25T01:12:32.683Z",
+ "finished": "2026-10-25T01:13:10.623Z",
+ "workflow_commit": "8973aff",
+ "workflow_hash": "40a6c88937278ba026cb28669621da0ff33c82b3c43c0d4239b19a5f5d9d6866",
+ "tree_clean": true,
+ "reset": true,
+ "only": "SW03,SW04",
+ "visible_sha256": "d4df64103d3d36bea17c57c67aac88e7cb48c4f738ff47e70855d041fc6e9b9d",
+ "holdout_sha256": null,
+ "set": "sweep",
+ "sweep_sha256": "e78351bd5983e40d7c70d294862a6caaabc55d0d49ccbc18ae0d490ea6611c2a",
+ "stray_alerts": 0,
+ "cases_run": 2,
+ "passed": 2,
+ "hard_rule_breaks": 0,
+ "cases": [
+  {
+   "id": "SW03",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 11.6,
+   "step_seconds": {
+    "1": 6.5,
+    "2": 6.7
+   },
+   "outcome": "LIMIT",
+   "limit_misses": [
+    {
+     "where": "final deal 71030 stage",
+     "rule": "H1",
+     "expected": "Closed Won",
+     "actual": "Appointment Scheduled"
+    },
+    {
+     "where": "final deal 71030 modified",
+     "rule": "H1",
+     "expected": "2026-10-17T07:40:00Z",
+     "actual": "2026-10-17T07:20:06Z"
+    }
+   ]
+  },
+  {
+   "id": "SW04",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 8.6,
+   "step_seconds": {
+    "1": 3.5,
+    "2": 4.7
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  }
+ ],
+ "proxy_real_errors": [
+  {
+   "at": "2026-10-25T02:12:58",
+   "step": "SW04:1",
+   "path": "/crm/v3/objects/contacts/batch/upsert",
+   "status": 404
+  }
+ ],
+ "secondary": {
+  "median_seconds_sync": 4.6,
+  "worst_seconds_sync": 4.8,
+  "retries": 1,
+  "hubspot_requests_via_proxy": 13
+ },
+ "secret_leaks": 0
+}
