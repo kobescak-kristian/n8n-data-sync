@@ -389,10 +389,15 @@ const r = $input.first().json || {};
 const n = __N__;
 const code = typeof r.statusCode === 'number' ? r.statusCode : null;
 let status = code;
+let category = String((r.body || {}).category || '');
 if (code === 207) {
   const e = ((r.body || {}).errors || [])[0] || {};
   status = Number(e.status) || (e.category === 'CONFLICT' ? 409 : 400);
+  category = String(e.category || '');
 }
+// Two parallel upserts of one new e-mail: HubSpot can answer the second with 404 OBJECT_NOT_FOUND ("Cannot update
+// contact that doesn't exist") while it still saves the new contact (D02, SW03). One retry after 1 s, like a 409.
+const contactRace = status === 404 && category === 'OBJECT_NOT_FOUND' && R.path === '/crm/v3/objects/contacts/batch/upsert';
 const out = { done: true, ok: false, attempts: n, status, reason: null, wait: 0, body: r.body || null,
   error: code === null ? String((r.error && (r.error.message || r.error.code || JSON.stringify(r.error))) || 'no answer').slice(0, 300) : '' };
 const hdr = (r.headers || {});
@@ -402,7 +407,7 @@ if (status === 429) {
   const ra = Number(hdr['retry-after']);
   out.wait = Number.isFinite(ra) && ra >= 0 ? Math.min(ra, 10) : 2;
   retry = true;
-} else if (status === 409) { retry = n === 1; out.wait = 1; }
+} else if (status === 409 || contactRace) { retry = n === 1; out.wait = 1; }
 else if (code === null || [500, 502, 503, 504].includes(status) || status >= 500) { retry = true; out.wait = n === 1 ? 2 : 8; }
 else if (status === 401 || status === 403) { out.reason = 'crm_auth_error'; return [{ json: out }]; }
 else { out.reason = 'crm_bad_request'; return [{ json: out }]; }

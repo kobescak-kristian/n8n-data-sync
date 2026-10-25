@@ -116,7 +116,8 @@ process.stdout.write(JSON.stringify(bodies.map((b) => checkAndClean(b))));
           f"{len(variants(base))} variants)")
     guard_bad = ledger_guard()
     wait_bad = retry_wait_guard()
-    return 1 if bad or guard_bad or wait_bad else 0
+    race_bad = contact_race_guard()
+    return 1 if bad or guard_bad or wait_bad or race_bad else 0
 
 
 def ledger_guard():
@@ -198,6 +199,49 @@ process.stdout.write(JSON.stringify(out));
             bad += 1
             print(f"DIFF retry wait {k}: want {w}, got {g}")
     print(f"{len(want) - bad} of {len(want)} retry-wait checks agree")
+    return bad
+
+
+def contact_race_guard():
+    """HubSpot 404 OBJECT_NOT_FOUND on a contact upsert (D02, SW03 race): one retry after 1 s; every other 404 and a
+    simulated 404 of the fault proxy: no retry, crm_bad_request (CASES.md 3.7)."""
+    contacts, deals = "/crm/v3/objects/contacts/batch/upsert", "/crm/v3/objects/deals/batch/upsert"
+    race = {"status": "error", "category": "OBJECT_NOT_FOUND", "message": "Cannot update contact that doesn't exist"}
+    sim = {"status": "error", "category": "SIMULATED", "message": "simulated 404 (fault proxy)"}
+    cases = {  # name: (path, try number, status code, body, want)
+        "race contact try 1": (contacts, 1, 404, race, ["retry", 1]),
+        "race contact try 2": (contacts, 2, 404, race, ["stop", "crm_retry_exhausted"]),
+        "race on a deal": (deals, 1, 404, race, ["stop", "crm_bad_request"]),
+        "simulated 404": (contacts, 1, 404, sim, ["stop", "crm_bad_request"]),
+        "race in a 207": (contacts, 1, 207, {"errors": [{"status": "404", "category": "OBJECT_NOT_FOUND"}]}, ["retry", 1]),
+        "plain 404 no body": (contacts, 1, 404, None, ["stop", "crm_bad_request"]),
+    }
+    js = r"""
+const cases = JSON.parse(process.argv[2]);
+const out = {};
+for (const [k, [path, n, code, body]] of Object.entries(cases)) {
+  const $ = (x) => ({ first: () => ({ json: { path } }) });
+  const $input = { first: () => ({ json: { statusCode: code, body, headers: {} } }) };
+  const fns = { 1: () => { __T1__ }, 2: () => { __T2__ } };
+  const o = fns[n]()[0].json;
+  out[k] = o.done === false ? ["retry", o.wait] : ["stop", o.reason];
+}
+process.stdout.write(JSON.stringify(out));
+""".replace("__T1__", J.check_try(1)).replace("__T2__", J.check_try(2))
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / "race.js"
+        p.write_text(js, encoding="utf-8")
+        r = subprocess.run(["node", str(p), json.dumps({k: v[:4] for k, v in cases.items()})], capture_output=True)
+    if r.returncode != 0:
+        print(r.stderr.decode("utf-8", "replace"))
+        return 1
+    got = json.loads(r.stdout)
+    bad = 0
+    for k, v in cases.items():
+        if got[k] != v[4]:
+            bad += 1
+            print(f"DIFF contact race {k}: want {v[4]}, got {got[k]}")
+    print(f"{len(cases) - bad} of {len(cases)} contact-race retry checks agree")
     return bad
 
 
