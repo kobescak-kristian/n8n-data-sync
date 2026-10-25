@@ -4,10 +4,20 @@
 # section 7): cases and expected results, grading, level, runs. A change applies
 # only to the next version, by a new dated version of this file and a note in
 # evals/RESULTS.md; the old version stays in git history.
-version: 2
-date: 2026-10-20
+version: 3
+date: 2026-10-25
 plan: "BLUEPRINT.md v1.3 (LOCKED 2026-10-20; v1.3 records the R1 changes), section 5"
 changes:
+  - version: 3
+    date: 2026-10-25
+    decision: "owner, 2026-10-25, in the Q-129 session: 'approved' (answer to: gate rule 3.7 change, one retry on HubSpot OBJECT_NOT_FOUND for contact writes)"
+    before_any_gated_run: true
+    what: >-
+      tests/CASES.md 3.7: HubSpot's 404 with category OBJECT_NOT_FOUND on a contact upsert is retried once after
+      1 s, like a 409 (two upserts of one new e-mail at the same moment; the gated case D02 missed on it in
+      vis-4 and vis-6). Every other 404 and the fault proxy's simulated 404 keep no retry. No expected value of
+      any visible case changed (tests/cases/visible.json SHA-256 d4df6410... as under versions 1 and 2); the
+      hold-out is unchanged. Build: workflows/sync_js.py check_try (8973aff).
   - version: 2
     date: 2026-10-20
     decision: "Approved: R1 findings 2, 3, 4, 5 and 11 (test changes), owner, 2026-10-20."

@@ -8,6 +8,10 @@ Plan: `BLUEPRINT.md` v1.3 (locked 2026-10-20; v1.3 records the R1
 changes), section 5. Where this file is more exact than the blueprint,
 this file is the test rule.
 
+Gate version 3, 2026-10-25 (`evals/eval_config.yaml` v3): one retry on
+HubSpot's 404 `OBJECT_NOT_FOUND` for a contact upsert (3.7). No expected
+value of any visible case changed.
+
 Gate version 2, 2026-10-20 (`evals/eval_config.yaml` v2): R1 red-team
 test changes 2, 3, 4, 5 and 11 (section 6, H4, 5.2, the generator
 checks) and R1 build notes 1, 6-10, 13, 14, 16, 17 (clarifying
@@ -236,7 +240,13 @@ the HubSpot upserts by key then still give one contact and one deal.
 - Retry: 429 (wait the `Retry-After` seconds, at most 10 s; without the
   header 2 s), 500, 502, 503, 504, timeout, closed connection. Waits
   for 5xx, timeout and closed connection: 2 s, then 8 s.
-- No retry: 400, 401, 403, 404.
+- No retry: 400, 401, 403, 404. One exception (gate v3): HubSpot's 404
+  with category `OBJECT_NOT_FOUND` on a contact upsert is retried once
+  after 1 s, like a 409. Two upserts of one new e-mail at the same
+  moment can get this answer while HubSpot still saves the new contact
+  (seen in D02 and sweep SW03, 2026-10-22 to 2026-10-25). Every other
+  404, and the fault proxy's simulated `404` (it has another category),
+  gets no retry.
 - If `Retry-After` is above 10, wait 10 s and retry.
 - At most 3 attempts per write (the first try + 2 retries). n8n node
   retry is off; one own retry loop, no double retry.
