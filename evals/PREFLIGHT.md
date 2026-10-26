@@ -1,6 +1,6 @@
 # PREFLIGHT — before each gated series
 
-The written preflight of eval-gate build checks (c): 6 items, checked by hand before each gated series
+The written preflight of eval-gate build checks (c): 7 items (1b added by gate v4), checked by hand before each gated series
 (P5) and again when a series restarts. Not a code guard. "Preflight done <date time>" and any item that
 needed action go into the first run's entry in `evals/RESULTS.md`.
 
@@ -10,10 +10,10 @@ only be checked right before the series: fill them in then, with the time.
 | # | Item | How to check | Status |
 |---|---|---|---|
 | 1 | The test tools are ours for the whole series | `n8n-usage.md` (shared notes): no open line of another build in the series window; add "IN USE Q-129 ... GATED" and send the start message (BLUEPRINT section 3). HubSpot "Portfolio Demo" is shared with Q-116: no Q-116 run during the series (its runs use n8n, so the n8n slot covers it). Slack `#data-sync-alerts` is this build's own channel. | before the series |
+| 1b | No fault proxy left running (R3 finding 9) | nothing answers on port 8130 before the series (the runner starts its own proxy from the current `tests/proxy.py`); `python tests/check_execute_once.py` exit 0 on the frozen commit (H-R02) | before the series |
 | 2 | Every credential works and does not expire before the series ends | see "Credentials" below | checked 2026-10-21 |
 | 3 | Every rate or daily limit on the test path, for 3 runs + 1 rerun | see "Limits" below | checked 2026-10-21 |
 | 4 | No KOS rule deploy or tool upgrade during the series | n8n stays 2.43.7 (never upgraded or restarted by this build); ask the planning session whether a KOS deploy or n8n change is planned in the window; no Python or Node upgrade on this machine during the series | before the series |
-| 1b | No fault proxy left running (R3 finding 9) | nothing answers on port 8130 before the series (the runner starts its own proxy from the current `tests/proxy.py`); `python tests/check_execute_once.py` exit 0 on the frozen commit (H-R02) | before the series |
 | 5 | One dry case through the full path, runner exit 0 (not a result) | the P4 2-case dry run on the frozen commit: `python tests/runner.py --label dry-<n> --only N01,T01` exit 0 | before the series |
 | 6 | Every line of BLUEPRINT section 3 "Reliability and security defaults" is built as written | see "Defaults" below | checked 2026-10-21 |
 

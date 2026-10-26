@@ -14,6 +14,14 @@ previous entry | secondary metrics | cost.
 
 ## Gate versions (not results)
 
+- v4, 2026-10-26, after the P5 gated FAIL (H-R02) and the R3 blind-spot
+  red team (q129-r3-blindspot-redteam.md in the shared notes): 9 new
+  visible cases (76 in all; visible SHA-256 a00203e5...), generator
+  limits for parallel groups, ping and NaN read like the Code nodes,
+  hold-out about 33 (owner, in the Q-129 session: "Pixel 9.",
+  voice-to-text, read as "fix all 9"). No expected value of an existing
+  visible case changed. The old hold-out is spent; a new one is written
+  under v4. See `evals/eval_config.yaml` `changes`.
 - v3, 2026-10-25, before any gated run: CASES.md 3.7, one retry on
   HubSpot's 404 `OBJECT_NOT_FOUND` for a contact upsert (owner, in the
   Q-129 session: "approved"). No visible expected value changed. See

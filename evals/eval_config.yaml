@@ -10,7 +10,7 @@ plan: "BLUEPRINT.md v1.4 (LOCKED 2026-10-20; v1.3 records the R1 changes, v1.4 g
 changes:
   - version: 4
     date: 2026-10-26
-    decision: "owner, 2026-10-26, in the Q-129 session: 'Pixel 9.' (voice-to-text; meaning 'fix all 9'), answering: approve R3 findings 1-9, the H-R02 fix and gate v4"
+    decision: "owner, 2026-10-26, in the Q-129 session: 'Pixel 9.' (voice-to-text; read as 'fix all 9'), answering: approve R3 findings 1-9, the H-R02 fix and gate v4"
     after_gated_fail: "P5 gated series FAIL on hold-out H-R02 (evals/RESULTS.md 2026-10-26); the old hold-out is spent, a new one is written after this version is committed"
     what: >-
       R3 blind-spot red team (shared notes q129-r3-blindspot-redteam.md). 9 new visible cases (76 in all):
