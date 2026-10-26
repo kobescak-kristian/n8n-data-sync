@@ -137,7 +137,7 @@ dataset:
     file: tests/cases/visible.json
     cases: 76   # N5 M8 E6 U7 D6 F7 V7 A8 T8 R9 S5 (BLUEPRINT section 5; gate v4)
     events: 132
-    sha256: a00203e57e63fb25cbfe08d0da9f1a08a4ff5a571f69f7d482b3b5ec941f4cd4   # gate v4 (versions 1-3: d4df6410...)
+    sha256: ea488c9ddc979a2e6970838f4ee7757abcb2eb3b32db3e6ab439d3a4b9272fa0   # gate v4 (versions 1-3: d4df6410...)
     order_numbers: "41001-48999"
     deterministic: "no clock, no random numbers; two runs give the same SHA-256 (STATE.md P1 entry)"
     self_check: >-

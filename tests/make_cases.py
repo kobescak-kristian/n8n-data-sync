@@ -1270,7 +1270,7 @@ def visible_case_defs():
     r08_v3 = edit(r08, status="completed", date_modified_gmt="2026-10-14T10:00:00",
                   date_modified="2026-10-14T12:00:00", date_completed_gmt="2026-10-14T10:00:00",
                   date_completed="2026-10-14T12:00:00")
-    C.append(case("R08", "Two open rows, only the older version is resent: only its row closes", [
+    C.append(case("R08", "Two open rows, the older version is resent first: only its row closes", [
         upd(r08_v3, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
         upd(r08_v2, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
         upd(r08_v2, "created"), upd(r08_v3, "updated")]))

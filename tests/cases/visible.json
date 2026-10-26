@@ -7590,7 +7590,7 @@
   {
    "id": "R08",
    "kind": "R",
-   "title": "Two open rows, only the older version is resent: only its row closes",
+   "title": "Two open rows, the older version is resent first: only its row closes",
    "related_to": [],
    "depends_on": [],
    "hard_rules": [

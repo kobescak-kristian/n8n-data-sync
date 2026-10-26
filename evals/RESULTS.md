@@ -16,7 +16,7 @@ previous entry | secondary metrics | cost.
 
 - v4, 2026-10-26, after the P5 gated FAIL (H-R02) and the R3 blind-spot
   red team (q129-r3-blindspot-redteam.md in the shared notes): 9 new
-  visible cases (76 in all; visible SHA-256 a00203e5...), generator
+  visible cases (76 in all; visible SHA-256 ea488c9d...), generator
   limits for parallel groups, ping and NaN read like the Code nodes,
   hold-out about 33 (owner, in the Q-129 session: "Pixel 9.",
   voice-to-text, read as "fix all 9"). No expected value of an existing

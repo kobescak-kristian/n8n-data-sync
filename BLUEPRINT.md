@@ -201,7 +201,7 @@ Visible total 76 (gate v4; 67 before). Hold-out about 33 (at least 2 per kind; i
 1. End to end: a signed WooCommerce order event becomes one HubSpot contact and one linked deal with exact values; updates, resends and late older updates are handled; every failed order is in needs-attention with a Slack alert, and replay works.
 2. Safety: 0 breaks of the five hard rules (H1-H5) in all 3 gated runs.
 3. Every gated case gives its expected result in all 3 runs (code checks 100%), or the FAIL is recorded honestly and fixed in a new version.
-4. Test standard met: 67 visible cases written before the build (76 since gate v4), about 30% hold-out by a separate session, 3 runs, worst run reported, every run recorded.
+4. Test standard met: 67 visible cases written before the build (9 more added with gate v4, after the first gated series), about 30% hold-out by a separate session, 3 runs, worst run reported, every run recorded.
 5. README in client words with the diagram, the limits, "going live" steps and a cover image; numbers only from RESULTS.md.
 
 ## 7. Decisions

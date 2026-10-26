@@ -642,7 +642,7 @@ missing here with its title. Expected results per step, in order.
 | R05 | Replay during the outage fails, second replay works | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created |
 | R06 | Two open rows for one order, the shop resends: both close by sync | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created |
 | R07 | Two open rows, replay of the second: it closes by replay, the first by sync | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created |
-| R08 | Two open rows, only the older version is resent: only its row closes | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created then updated |
+| R08 | Two open rows, the older version is resent first: only its row closes | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created then updated |
 | R09 | Replay of a step that opened no row | created then replay_refused (row_not_found) |
 | S01 | Summary counts match the log | created then updated then skipped_duplicate then skipped_older then needs_attention (missing_email) then summary |
 | S02 | Six failed orders in the window: summary and the over-5 alert | needs_attention (missing_email) then needs_attention (invalid_total) then needs_attention (invalid_currency) then needs_attention (invalid_status) then needs_attention (missing_name) then needs_attention (invalid_email) then summary |
@@ -668,7 +668,8 @@ file only.
    other orders of events, rules not covered visibly (for example
    `too_large`, `invalid_text_field`, `invalid_order_number`,
    `missing_date_created`, `timeout`, `429` with no wait header, `500`,
-   `504`, a replay that ends `skipped_older`).
+   `504`). A replay cannot end `skipped_older` one step after another
+   (a newer sync closes the row first), so do not write that case.
 4. Write every expected value by hand from this file, in the format of
    section 5 (`"set": "holdout"`).
 5. Check: `python tests/make_cases.py --check <file> --set holdout`
