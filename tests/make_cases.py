@@ -1,6 +1,6 @@
 """Visible test cases for n8n-data-sync (Q-129), BLUEPRINT.md v1.2 section 5.
 
-Rules: tests/CASES.md. This file holds the 67 visible cases and a small
+Rules: tests/CASES.md. This file holds the 76 visible cases (gate v4) and a small
 reference model of the CASES.md rules. The model fills in the expected
 end state of every case and checks every hand-written expected result.
 
@@ -44,8 +44,8 @@ class CaseError(Exception):
 # ---------------------------------------------------------------------------
 # Closed lists (tests/CASES.md section 4). Anything else is "unknown".
 # ---------------------------------------------------------------------------
-KIND_COUNTS = {"N": 5, "M": 8, "E": 6, "U": 6, "D": 6, "F": 7, "V": 7,
-               "A": 6, "T": 6, "R": 5, "S": 5}
+KIND_COUNTS = {"N": 5, "M": 8, "E": 6, "U": 7, "D": 6, "F": 7, "V": 7,
+               "A": 8, "T": 8, "R": 9, "S": 5}
 HOLDOUT_MIN_PER_KIND = 2
 HARD_RULES_BY_KIND = {
     "N": ["H1", "H2", "H4"], "M": ["H1", "H2", "H4"], "E": ["H1", "H2", "H5"],
@@ -119,7 +119,7 @@ EMAIL_RE = re.compile(r"^%s(?:\.%s)*@%s(?:\.%s)+$" % (EMAIL_ATOM, EMAIL_ATOM, EM
 TOTAL_RE = re.compile(r"^[0-9]+(?:\.[0-9]{1,2})?$")
 ORDER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$")
 DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$")
-PING_RE = re.compile(r"^webhook_id=[0-9]+$")
+PING_RE = re.compile(r"^webhook_id=[0-9]+\Z")  # \Z: like JavaScript's $, no match before a final newline (R3-07)
 
 
 def trim(s):
@@ -250,9 +250,14 @@ def check_and_clean(payload):
 # ---------------------------------------------------------------------------
 # Reference model of the sync (tests/CASES.md section 3)
 # ---------------------------------------------------------------------------
+def _no_constant(name):
+    raise ValueError("not JSON: " + name)
+
+
 def parse_body(body):
+    # NaN, Infinity and -Infinity are not JSON; JavaScript's JSON.parse refuses them too (R3-07)
     try:
-        return json.loads(body)
+        return json.loads(body, parse_constant=_no_constant)
     except ValueError:
         return None
 
@@ -432,6 +437,9 @@ class Model:
         for ev in case["events"]:
             ctx = {"case": cid, "step": ev["step"], "body": ev.get("body")}
             before = self.snapshot(orders, emails)
+            p = parse_body(ev.get("body", "")) if ev.get("parallel") is not None else None
+            num = trim(p["number"]) if isinstance(p, dict) and isinstance(p.get("number"), str) else None
+            open_row = num is not None and any(r["state"] == "open" and r["order"] == num for r in self.rows)
             if ev["type"] == "webhook":
                 out = self.webhook(ev, ctx)
             elif ev["type"] == "replay":
@@ -455,6 +463,7 @@ class Model:
             # Asserted only where H3 asks for it; never per event inside a parallel group.
             out["hubspot_unchanged"] = (True if out["result"] not in (None, "created", "updated")
                                         and not changed and not ev.get("parallel") else None)
+            out["parallel_meets_open_row"] = open_row
             per_event.append(out)
 
         valid_emails = sorted(e for e in emails if EMAIL_RE.match(e) and len(e) <= 254)
@@ -578,6 +587,9 @@ def check_set(cases, set_name):
         per_event, final = model.run_case(c)
         for ev, out in zip(c["events"], per_event):
             exp = ev["expect"]
+            if out["parallel_meets_open_row"]:
+                err(cid, "step %d: a parallel group meets an open needs-attention row of its order (which copy "
+                    "closes it is chance; CASES.md 5.2)" % ev["step"])
             if out["result"] is None and ev["type"] != "summary":
                 err(cid, "step %d: model gave no result" % ev["step"])
             if out["result"] is not None and out["result"] not in exp["result"]:
@@ -683,6 +695,10 @@ def check_events(c, err):
             err(cid, "parallel group %s: faults must be null" % name)
         if any(ev.get("force_crash") for ev in evs):
             err(cid, "parallel group %s: force_crash must be false" % name)
+        first = min(ev.get("step", 0) for ev in evs)
+        if any(ev.get("type") == "summary" and ev.get("step", 0) > first for ev in events):
+            err(cid, "parallel group %s: no summary after a parallel group (the counts depend on which copy "
+                "finishes first; CASES.md 5.2)" % name)
     fin = c.get("expected_final") or {}
     for r in fin.get("attention_rows", []):
         if r.get("state") not in ROW_STATES or r.get("closed_by") not in CLOSED_BY:
@@ -907,7 +923,7 @@ def hr(num, email, first, last, items, created, **kw):
 
 
 # ---------------------------------------------------------------------------
-# The 67 visible cases (BLUEPRINT.md section 5)
+# The 76 visible cases (BLUEPRINT.md section 5; gate v4 added U07, A07, A08, T07, T08, R06-R09)
 # ---------------------------------------------------------------------------
 def visible_case_defs():
     C = []
@@ -1060,6 +1076,11 @@ def visible_case_defs():
                   date_modified="2026-10-08T14:00:09")
     C.append(case("U06", "Update event arrives before the create event", [
         upd(u06_v2, "created"), wh(u06_v1, "skipped_older")]))
+    u07 = hr(41307, "nikola.rajic@" + POST, "Nikola", "Rajić", [("helmet", 1)], "2026-10-08T13:00:00")
+    u07b = edit(u07, date_modified_gmt="2026-10-08T15:00:00", date_modified="2026-10-08T17:00:00",
+                **{"billing.email": "nikola.rajic@" + MAIL})
+    C.append(case("U07", "Customer corrects the e-mail in an update: deal linked to both contacts", [
+        wh(u07, "created"), upd(u07b, "updated")]))
 
     # D: duplicate orders --------------------------------------------------
     d01 = hr(41401, "marko.juric@" + MAIL, "Marko", "Jurić", [("battery", 1)], "2026-10-09T07:00:00")
@@ -1171,6 +1192,10 @@ def visible_case_defs():
     C.append(case("A06", "Signed body that is cut off (not valid JSON)", [
         wh(None, "needs_attention", "not_json",
            body=php_json(a(41706, "boris.lukic@" + POST, "2026-10-12T07:50:00"))[:700])]))
+    C.append(case("A07", "Signed empty body (not valid JSON)", [
+        wh(None, "needs_attention", "not_json", body="")]))
+    C.append(case("A08", "Empty body without a signature", [
+        wh(None, "rejected", "no_signature", sign="none", body="")]))
 
     # T: HubSpot errors (simulated through the fault proxy) ----------------------
     def t(num, email, created):
@@ -1193,6 +1218,12 @@ def visible_case_defs():
     C.append(case("T06", "HubSpot says 400 on the deal: no retry, contact already written", [
         wh(t(41806, "hrvoje.sertic@" + INBOX, "2026-10-13T07:50:00"), "needs_attention",
            "crm_bad_request", faults={"deals": ["400"]})]))
+    C.append(case("T07", "Contact connection closed then OK, deal 403: no retry", [
+        wh(t(41807, "kristina.mlinar@" + MAIL, "2026-10-13T08:00:00"), "needs_attention",
+           "crm_auth_error", faults={"contacts": ["close", "pass"], "deals": ["403"]})]))
+    C.append(case("T08", "Contact answer times out after HubSpot saved it, deal 404: no retry", [
+        wh(t(41808, "zoran.bilic@" + POST, "2026-10-13T08:10:00"), "needs_attention",
+           "crm_bad_request", faults={"contacts": ["timeout_after_forward", "pass"], "deals": ["404"]})]))
 
     # R: replay and fix at source ---------------------------------------------
     def r(num, email, created):
@@ -1219,6 +1250,33 @@ def visible_case_defs():
            "crm_retry_exhausted", faults=OUTAGE),
         replay(1, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
         replay(1, "created")]))
+    # two open rows for one order (H-R02, gate v4): every open row the step may close must close
+    r06 = r(41906, "mia.grgic@" + MAIL, "2026-10-14T07:50:00")
+    C.append(case("R06", "Two open rows for one order, the shop resends: both close by sync", [
+        wh(r06, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
+        wh(r06, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
+        wh(r06, "created")]))
+    r07 = r(41907, "karlo.vidovic@" + POST, "2026-10-14T08:00:00")
+    r07b = edit(r07, status="completed", date_modified_gmt="2026-10-14T10:00:00",
+                date_modified="2026-10-14T12:00:00", date_completed_gmt="2026-10-14T10:00:00",
+                date_completed="2026-10-14T12:00:00")
+    C.append(case("R07", "Two open rows, replay of the second: it closes by replay, the first by sync", [
+        wh(r07, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
+        upd(r07b, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
+        replay(2, "created")]))
+    r08 = r(41908, "lucija.bozic@" + INBOX, "2026-10-14T08:10:00")
+    r08_v2 = edit(r08, status="on-hold", date_modified_gmt="2026-10-14T09:00:00",
+                  date_modified="2026-10-14T11:00:00")
+    r08_v3 = edit(r08, status="completed", date_modified_gmt="2026-10-14T10:00:00",
+                  date_modified="2026-10-14T12:00:00", date_completed_gmt="2026-10-14T10:00:00",
+                  date_completed="2026-10-14T12:00:00")
+    C.append(case("R08", "Two open rows, only the older version is resent: only its row closes", [
+        upd(r08_v3, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
+        upd(r08_v2, "needs_attention", "crm_retry_exhausted", faults=OUTAGE),
+        upd(r08_v2, "created"), upd(r08_v3, "updated")]))
+    C.append(case("R09", "Replay of a step that opened no row", [
+        wh(r(41909, "dora.matkovic@" + MAIL, "2026-10-14T08:20:00"), "created"),
+        replay(1, "replay_refused", "row_not_found")]))
 
     # S: alerts and summary ------------------------------------------------------
     s01 = hr(42001, "kreso.barisic@" + MAIL, "Krešimir", "Barišić", [("trek", 1)],

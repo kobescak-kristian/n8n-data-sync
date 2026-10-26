@@ -4,9 +4,18 @@ Written before the build (eval gate: `evals/eval_config.yaml`). The
 workflow is built to these rules, never the reverse. A separate session
 writes the hold-out cases from this file alone (section 8).
 
-Plan: `BLUEPRINT.md` v1.3 (locked 2026-10-20; v1.3 records the R1
-changes), section 5. Where this file is more exact than the blueprint,
+Plan: `BLUEPRINT.md` v1.4 (locked 2026-10-20; v1.3 records the R1
+changes, v1.4 gate v4), section 5. Where this file is more exact than the blueprint,
 this file is the test rule.
+
+Gate version 4, 2026-10-26 (`evals/eval_config.yaml` v4), after the P5
+gated series failed on hold-out case H-R02 and the R3 blind-spot red
+team: 9 new visible cases (U07, A07, A08, T07, T08, R06-R09; 76 in
+all), two parallel-group limits (5.2), the generator reads a body like
+the Code nodes (ping only without a final newline, NaN is not JSON),
+clarifying sentences in 3.1 and 3.8, the hold-out size (section 8) and
+letter-case order numbers out of scope (section 9). No expected value
+of an existing visible case changed.
 
 Gate version 3, 2026-10-25 (`evals/eval_config.yaml` v3): one retry on
 HubSpot's 404 `OBJECT_NOT_FOUND` for a contact upsert (3.7). No expected
@@ -97,8 +106,9 @@ HubSpot records and empties the `q129_*` tables (BLUEPRINT section 3).
    example `order.deleted`, `product.updated`): HTTP 200, `ignored`,
    `other_topic`. Deleting an order in the shop never changes HubSpot.
 5. Every other signed request gets HTTP 200 at once; the work below
-   runs after the answer. A signed body that is not a JSON object:
-   `needs_attention`, reason `not_json` (row and alert, 3.8 and 3.10).
+   runs after the answer. A signed body that is not a JSON object
+   (also an empty body): `needs_attention`, reason `not_json` (row and
+   alert, 3.8 and 3.10).
 6. `rejected` and `ignored` requests get one log row and no alert.
    `order.created` and `order.updated` are handled the same way (both
    are upserts); their order is decided by the version time (3.5).
@@ -272,7 +282,8 @@ the HubSpot upserts by key then still give one contact and one deal.
   replay count goes up by one, and a `replay_failed` alert is sent.
 - A row closes by itself (closed by `sync`) when an event for the same
   order number ends `created` or `updated` with a version equal to or
-  newer than the row's version (rows with no version also close). Rows
+  newer than the row's version (rows with no version also close). Every
+  such row closes, also when one order has several open rows. Rows
   without an order number never close by themselves.
 - A row closes by `replay` when its replay ends `created`, `updated`,
   `skipped_duplicate` or `skipped_older`.
@@ -374,8 +385,8 @@ none (for example a wrong HTTP code or attempt count) is still a miss.
 A case may use only these values; the generator check stops on any
 other.
 
-- Kinds and visible counts: N 5, M 8, E 6, U 6, D 6, F 7, V 7, A 6,
-  T 6, R 5, S 5 (67).
+- Kinds and visible counts: N 5, M 8, E 6, U 7, D 6, F 7, V 7, A 8,
+  T 8, R 9, S 5 (76).
 - HTTP codes: 200, 401, 413.
 - Results: `created`, `updated`, `skipped_duplicate`, `skipped_older`,
   `needs_attention`, `ignored`, `rejected`, `replay_refused`, `crash`.
@@ -428,7 +439,7 @@ Webhook event:
 | `content_type` | `application/json`, or null for none |
 | `body` | the exact body text to send |
 | `sign` | `valid` (secret), `none` (no header), `wrong_secret` (another secret), `tampered` (sign `body`, then send it with `tamper.find` replaced once by `tamper.replace`) |
-| `parallel` | null, or a group name: events with the same name are sent at the same moment. Events in one group have the same `body` bytes (the topic may differ), `faults` null and `force_crash` false; the generator stops on any other group |
+| `parallel` | null, or a group name: events with the same name are sent at the same moment. Events in one group have the same `body` bytes (the topic may differ), `faults` null and `force_crash` false; the generator stops on any other group. Gate v4 (R3 finding 4): no summary event after a parallel group, and no parallel group while its order has an open needs-attention row (which copy closes the row, and the counts, would be chance) |
 | `faults` | null, or `{"contacts": [...], "deals": [...]}` (5.4) |
 | `force_crash` | true only for the crash test (3.13) |
 | `expect` | 5.3 |
@@ -587,6 +598,7 @@ missing here with its title. Expected results per step, in order.
 | U04 | Older update (on-hold) arrives after the newer one (completed) | created then updated then skipped_older |
 | U05 | Update with empty phone and company keeps both stored values | created then updated |
 | U06 | Update event arrives before the create event | created then skipped_older |
+| U07 | Customer corrects the e-mail in an update: deal linked to both contacts | created then updated |
 | D01 | Same event delivered twice | created then skipped_duplicate |
 | D02 | Same event sent twice at the same moment | created/updated/skipped_duplicate then created/updated/skipped_duplicate |
 | D03 | Update delivered again after it was synced | created then updated then skipped_duplicate |
@@ -613,17 +625,25 @@ missing here with its title. Expected results per step, in order.
 | A04 | WooCommerce ping when the webhook is saved | ignored (ping) |
 | A05 | Order deleted in the shop: event ignored, deal stays | created then ignored (other_topic) |
 | A06 | Signed body that is cut off (not valid JSON) | needs_attention (not_json) |
+| A07 | Signed empty body (not valid JSON) | needs_attention (not_json) |
+| A08 | Empty body without a signature | rejected (no_signature) |
 | T01 | HubSpot rate limit (429, wait 2 s) then OK | created |
 | T02 | HubSpot server error (503) on the deal, then OK | created |
 | T03 | Deal write reaches HubSpot but the answer times out, retry | created |
 | T04 | HubSpot server errors every time: retries used up | needs_attention (crm_retry_exhausted) |
 | T05 | HubSpot says 401 (key problem): no retry | needs_attention (crm_auth_error) |
 | T06 | HubSpot says 400 on the deal: no retry, contact already written | needs_attention (crm_bad_request) |
+| T07 | Contact connection closed then OK, deal 403: no retry | needs_attention (crm_auth_error) |
+| T08 | Contact answer times out after HubSpot saved it, deal 404: no retry | needs_attention (crm_bad_request) |
 | R01 | Replay after a HubSpot outage | needs_attention (crm_retry_exhausted) then created |
 | R02 | Replay pressed twice | needs_attention (crm_retry_exhausted) then created then replay_refused (row_closed) |
 | R03 | Shop resends the order after an outage, then replay of the closed row | needs_attention (crm_retry_exhausted) then created then replay_refused (row_closed) |
 | R04 | Order fixed in the shop (e-mail added) closes the row by itself | needs_attention (missing_email) then created |
 | R05 | Replay during the outage fails, second replay works | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created |
+| R06 | Two open rows for one order, the shop resends: both close by sync | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created |
+| R07 | Two open rows, replay of the second: it closes by replay, the first by sync | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created |
+| R08 | Two open rows, only the older version is resent: only its row closes | needs_attention (crm_retry_exhausted) then needs_attention (crm_retry_exhausted) then created then updated |
+| R09 | Replay of a step that opened no row | created then replay_refused (row_not_found) |
 | S01 | Summary counts match the log | created then updated then skipped_duplicate then skipped_older then needs_attention (missing_email) then summary |
 | S02 | Six failed orders in the window: summary and the over-5 alert | needs_attention (missing_email) then needs_attention (invalid_total) then needs_attention (invalid_currency) then needs_attention (invalid_status) then needs_attention (missing_name) then needs_attention (invalid_email) then summary |
 | S03 | Exactly five failed orders: summary, no over-5 alert | needs_attention (missing_total) then needs_attention (invalid_currency) then needs_attention (invalid_date_modified) then needs_attention (invalid_total) then needs_attention (invalid_email) then summary |
@@ -636,8 +656,9 @@ The hold-out writer never builds, never opens `tests/cases/visible.json`
 or `tests/make_cases.py` (it may run the checker), and works from this
 file only.
 
-1. About 29 cases, at least 2 per kind (every kind then has at least 7
-   with the visible ones). IDs `H-<kind><2 digits>`.
+1. About 33 cases (about 30% of all cases with the 76 visible), at
+   least 2 per kind (every kind then has at least 7 with the visible
+   ones). IDs `H-<kind><2 digits>`.
 2. Order numbers 61001 to 69999 (an optional letter prefix such as
    `HB-61001` is allowed); valid e-mails only on subdomains of
    `harbour-sync-h.example.com`. Made-up people only. No case may
@@ -646,8 +667,8 @@ file only.
    does not: other fields, other formats, two problems in one order,
    other orders of events, rules not covered visibly (for example
    `too_large`, `invalid_text_field`, `invalid_order_number`,
-   `missing_date_created`, `row_not_found`, `timeout`, `close`, 403,
-   404, a replay that ends `skipped_older`).
+   `missing_date_created`, `timeout`, `429` with no wait header, `500`,
+   `504`, a replay that ends `skipped_older`).
 4. Write every expected value by hand from this file, in the format of
    section 5 (`"set": "holdout"`).
 5. Check: `python tests/make_cases.py --check <file> --set holdout`
@@ -662,13 +683,16 @@ file only.
 7. Opening (gate v2, owner 2026-10-20): at the first gated run, after
    the seal check and before any scoring, run the current checker on
    the extracted file: `python tests/make_cases.py --check <file> --set
-   holdout`. The hold-out was sealed under gate v1; any case the v2
-   checker refuses is a wrong case for an owner decision (eval-gate §7),
-   never a silent fix, and the refusal is recorded in `evals/RESULTS.md`.
+   holdout`. Any case the current checker refuses (for example a hold-out
+   sealed under an older gate version) is a wrong case for an owner
+   decision (eval-gate §7), never a silent fix, and the refusal is
+   recorded in `evals/RESULTS.md`.
 
 ## 9. Not tested here
 
 Real shops and real customer data, volumes above the test set,
 webhooks that never arrive (version 2 idea), HubSpot UI behaviour,
 Slack delivery itself (we check what the workflow recorded it sent),
-n8n Cloud and other n8n versions, the 30-day row retention.
+n8n Cloud and other n8n versions, the 30-day row retention, order
+numbers that differ only in letter case (`HB-61001` and `hb-61001`:
+version 2 list; HubSpot's search does not tell them apart).

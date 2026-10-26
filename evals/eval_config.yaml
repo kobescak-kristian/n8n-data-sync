@@ -4,10 +4,25 @@
 # section 7): cases and expected results, grading, level, runs. A change applies
 # only to the next version, by a new dated version of this file and a note in
 # evals/RESULTS.md; the old version stays in git history.
-version: 3
-date: 2026-10-25
-plan: "BLUEPRINT.md v1.3 (LOCKED 2026-10-20; v1.3 records the R1 changes), section 5"
+version: 4
+date: 2026-10-26
+plan: "BLUEPRINT.md v1.4 (LOCKED 2026-10-20; v1.3 records the R1 changes, v1.4 gate v4), section 5"
 changes:
+  - version: 4
+    date: 2026-10-26
+    decision: "owner, 2026-10-26, in the Q-129 session: 'Pixel 9.' (voice-to-text; meaning 'fix all 9'), answering: approve R3 findings 1-9, the H-R02 fix and gate v4"
+    after_gated_fail: "P5 gated series FAIL on hold-out H-R02 (evals/RESULTS.md 2026-10-26); the old hold-out is spent, a new one is written after this version is committed"
+    what: >-
+      R3 blind-spot red team (shared notes q129-r3-blindspot-redteam.md). 9 new visible cases (76 in all):
+      R06, R07, R08 (two open rows for one order in 3 shapes; R3 finding 1), R09 (row_not_found), T07, T08
+      (close, 403, simulated 404, contacts timeout_after_forward; finding 5), A07, A08 (empty body; finding 3),
+      U07 (e-mail changed in an update; finding 6). Generator: no summary after a parallel group and no
+      parallel group while its order has an open row (finding 4); the model reads a body like the Code nodes
+      (ping regex with \Z, NaN not JSON; finding 7). CASES.md: clarifying sentences 3.1 (empty body) and 3.8
+      (every open row closes), section 8 hold-out about 33 cases, section 9 letter-case order numbers (finding 8).
+      PREFLIGHT item 1b (finding 9). No expected value of an existing visible case changed; the visible file
+      changed (new SHA-256 in visible_set). Build: executeOnce removed from the 9 Code nodes that read
+      $input.all() (H-R02, finding 2), empty-body signing in Entry (finding 3), tests/check_execute_once.py.
   - version: 3
     date: 2026-10-25
     decision: "owner, 2026-10-25, in the Q-129 session: 'approved' (answer to: gate rule 3.7 change, one retry on HubSpot OBJECT_NOT_FOUND for contact writes)"
@@ -120,8 +135,9 @@ dataset:
   visible_set:
     generator: tests/make_cases.py
     file: tests/cases/visible.json
-    cases: 67   # N5 M8 E6 U6 D6 F7 V7 A6 T6 R5 S5 (BLUEPRINT section 5)
-    events: 114
+    cases: 76   # N5 M8 E6 U7 D6 F7 V7 A8 T8 R9 S5 (BLUEPRINT section 5; gate v4)
+    events: 132
+    sha256: a00203e57e63fb25cbfe08d0da9f1a08a4ff5a571f69f7d482b3b5ec941f4cd4   # gate v4 (versions 1-3: d4df6410...)
     order_numbers: "41001-48999"
     deterministic: "no clock, no random numbers; two runs give the same SHA-256 (STATE.md P1 entry)"
     self_check: >-
@@ -132,7 +148,7 @@ dataset:
       simulated flag, a wrong case_count or format_version. tests/test_make_cases.py plants each mistake and
       checks that it stops.
   hold_out_set:
-    share: "about 30% of all cases (about 29 with 67 visible; at least 2 per kind)"
+    share: "about 30% of all cases (about 33 with 76 visible since gate v4; at least 2 per kind)"
     author: "a separate session that never builds and never opens the visible cases; from tests/CASES.md only"
     order_numbers: "61001-69999"
     check: "python tests/make_cases.py --check <file> --set holdout, before sealing"

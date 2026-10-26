@@ -78,6 +78,7 @@ def main():
                 bodies.append(ev["body"])
     base = next(b for b in bodies if b.startswith("{") and '"total":"' in b)
     bodies += variants(base)
+    bodies.append(base.replace('"total":"', '"total":NaN,"total_text":"', 1))  # not JSON in JS or the model (R3-07)
 
     expected = []
     for b in bodies:
@@ -117,7 +118,107 @@ process.stdout.write(JSON.stringify(bodies.map((b) => checkAndClean(b))));
     guard_bad = ledger_guard()
     wait_bad = retry_wait_guard()
     race_bad = contact_race_guard()
-    return 1 if bad or guard_bad or wait_bad or race_bad else 0
+    gate_bad = gate_guard()
+    close_bad = rows_to_close_guard()
+    return 1 if bad or guard_bad or wait_bad or race_bad or gate_bad or close_bad else 0
+
+
+def run_js(name, js, arg):
+    with tempfile.TemporaryDirectory() as tmp:
+        p = Path(tmp) / name
+        p.write_text(js, encoding="utf-8")
+        r = subprocess.run(["node", str(p), json.dumps(arg)], capture_output=True)
+    if r.returncode != 0:
+        print(r.stderr.decode("utf-8", "replace"))
+        return None
+    return json.loads(r.stdout)
+
+
+def gate_guard():
+    """Entry Gate (R3-03, R3-07): an empty body keeps its request ID and signature check, a failed Crypto node is a
+    bad signature (not a lost request), and the Gate agrees with the model on what is accepted."""
+    sig = "c2lnbmF0dXJl"
+    cases = {  # name: (read-request fields, Crypto output, model event)
+        "signed empty body": ({"bytes": 0, "text": "", "has_sig": True, "sig": sig}, {"signature": sig},
+                              {"body": "", "sign": "valid", "topic": "order.created"}),
+        "unsigned empty body": ({"bytes": 0, "text": "", "has_sig": False, "sig": ""}, {"signature": sig},
+                                {"body": "", "sign": "none", "topic": "order.created"}),
+        "crypto failed": ({"bytes": 3, "text": "abc", "has_sig": True, "sig": sig}, {"error": {"message": "x"}},
+                          {"body": "abc", "sign": "wrong_secret", "topic": "order.created"}),
+        "ping": ({"bytes": 13, "text": "webhook_id=14", "has_sig": False, "sig": ""}, {"signature": sig},
+                 {"body": "webhook_id=14", "sign": "none", "topic": None}),
+        "ping with final newline": ({"bytes": 14, "text": "webhook_id=14\n", "has_sig": False, "sig": ""},
+                                    {"signature": sig}, {"body": "webhook_id=14\n", "sign": "none", "topic": None}),
+    }
+    arg = {}
+    for k, (rr, crypto, _) in cases.items():
+        rr = dict(rr, topic="order.created", delivery_id="d-1", request_id="runner-1", test_crash=False, received_ms=0)
+        arg[k] = [rr, crypto]
+    js = r"""
+const cases = JSON.parse(process.argv[2]);
+const out = {};
+for (const [k, [rr, crypto]] of Object.entries(cases)) {
+  const $ = (n) => ({ first: () => ({ json: n === 'Read request' ? rr : {} }) });
+  const $input = { first: () => ({ json: crypto }) };
+  const $execution = { id: '7' };
+  const g = (() => { __GATE__ })()[0].json;
+  out[k] = [g.http, g.result, g.reason, g.request_id];
+}
+process.stdout.write(JSON.stringify(out));
+""".replace("__GATE__", J.GATE)
+    got = run_js("gate.js", js, arg)
+    if got is None:
+        return 1
+    bad = 0
+    for k, (_, _, ev) in cases.items():
+        m = M.Model().webhook(dict(ev, faults=None, force_crash=False), {"case": "G", "step": 1, "body": ev["body"]})
+        accepted = m["result"] not in ("rejected", "ignored")
+        g = got[k]
+        ok = g[3] == "runner-1" and ((g[1] == "accepted") == accepted) and (
+            accepted or (g[0] == m["http"] and g[1] == m["result"] and g[2] == m["reasons"][0]))
+        if not ok:
+            bad += 1
+            print(f"DIFF gate {k}: model {m['http']} {m['result']} {m['reasons']}, js {g}")
+    print(f"{len(cases) - bad} of {len(cases)} gate checks agree")
+    return bad
+
+
+def rows_to_close_guard():
+    """Rows to close (H-R02, CASES.md 3.8): every open row the step may close closes, also with two open rows."""
+    v1, v2, v3 = "2026-10-01T09:00:00Z", "2026-10-01T10:00:00Z", "2026-10-01T11:00:00Z"
+    row = lambda i, v: {"id": i, "order_number": "HB-1", "version": v, "state": "open"}  # noqa: E731
+    cases = {  # name: (state, open rows, want [(row_id, closed_by)])
+        "sync closes two rows": ({"action": "write", "modified": v1}, [row(1, v1), row(2, v1)],
+                                 [[1, "sync"], [2, "sync"]]),
+        "replay of the second row": ({"action": "write", "modified": v2, "replay": {"row_id": 2}},
+                                     [row(1, v1), row(2, v2)], [[1, "sync"], [2, "replay"]]),
+        "only the older row": ({"action": "write", "modified": v2}, [row(1, v3), row(2, v2)], [[2, "sync"]]),
+        "skip closes only the replayed row": ({"action": "skip", "modified": v2, "replay": {"row_id": 2}},
+                                              [row(1, v1), row(2, v2)], [[2, "replay"]]),
+        "no open row": ({"action": "write", "modified": v1}, [{}], []),
+    }
+    js = r"""
+const cases = JSON.parse(process.argv[2]);
+const out = {};
+for (const [k, [state, rows]] of Object.entries(cases)) {
+  const S = Object.assign({ order_number: 'HB-1', request_id: 'r-1', replay: null }, state);
+  const $ = () => ({ first: () => ({ json: S }) });
+  const $input = { all: () => rows.map((json) => ({ json })) };
+  const res = (() => { __CLOSE__ })().map((i) => i.json).filter((j) => j.row_id !== -1);
+  out[k] = res.map((j) => [j.row_id, j.closed_by]);
+}
+process.stdout.write(JSON.stringify(out));
+""".replace("__CLOSE__", J.ROWS_TO_CLOSE.replace("__STATE__", "S"))
+    got = run_js("close.js", js, {k: v[:2] for k, v in cases.items()})
+    if got is None:
+        return 1
+    bad = 0
+    for k, v in cases.items():
+        if sorted(got[k]) != v[2]:
+            bad += 1
+            print(f"DIFF rows to close {k}: want {v[2]}, got {got[k]}")
+    print(f"{len(cases) - bad} of {len(cases)} rows-to-close checks agree")
+    return bad
 
 
 def ledger_guard():

@@ -81,6 +81,8 @@ def js(w, text):
 
 
 def code(w, name, text, x, y=0, **extra):
+    # A Code node that reads $input.all() never gets executeOnce: n8n then passes only the first item (H-R02, F-141;
+    # tests/check_execute_once.py stops it).
     return w.add(name, "n8n-nodes-base.code", 2, {"jsCode": js(w, text)}, x, y, **extra)
 
 
@@ -161,6 +163,13 @@ def sign_body(w, name, x, y=0):
         "dataPropertyName": "signature", "encoding": "base64"}, x, y, cred="crypto", onError="continueRegularOutput")
 
 
+def sign_empty(w, name, x, y=0):
+    # n8n's webhook gives no binary for a 0-byte body, so the binary HMAC above would fail (R3-03): sign the empty text.
+    return w.add(name, "n8n-nodes-base.crypto", 2, {
+        "action": "hmac", "type": "SHA256", "binaryData": False, "value": "={{ '' }}",
+        "dataPropertyName": "signature", "encoding": "base64"}, x, y, cred="crypto", onError="continueRegularOutput")
+
+
 def respond(w, name, body_expr, code_expr, x, y=0):
     return w.add(name, "n8n-nodes-base.respondToWebhook", 1.4, {
         "respondWith": "json", "responseBody": body_expr, "options": {"responseCode": code_expr}}, x, y)
@@ -203,7 +212,7 @@ def build_hubspot_call(live):
     def recheck_after_wait(n, x, y):
         get_rows(w, f"Recheck ledger after wait {n}", "q129_ledger", x, y,
                  filters=[cond("order_number", "={{ $('Start').first().json.order_number }}")], executeOnce=True)
-        code(w, f"Recheck after wait {n}", J.recheck_wait(n), x + 1, y, executeOnce=True)
+        code(w, f"Recheck after wait {n}", J.recheck_wait(n), x + 1, y)
         if_true(w, f"Still newest after wait {n}?", "={{ $json.skip !== true }}", x + 2, y)
 
     attempt(1, 1, 0)
@@ -248,7 +257,7 @@ def build_core(live):
         "encoding": "hex"}, 3, -1)
     get_rows(w, "Find ledger row", "q129_ledger", 4, -1,
              filters=[cond("order_number", "={{ $json.order_number }}")], executeOnce=True)
-    code(w, "Decide", J.DECIDE, 5, -1, executeOnce=True)
+    code(w, "Decide", J.DECIDE, 5, -1)
     if_true(w, "Write?", "={{ $json.action === 'write' }}", 6, -1)
 
     # write path: contact, deal, link (CASES.md 3.7), then ledger and closed rows (3.5, 3.8); the ledger is read
@@ -256,7 +265,7 @@ def build_core(live):
     # retry wait (SW02); a skip from there goes to the skip path through "Skip?"
     get_rows(w, "Recheck ledger 1", "q129_ledger", 6.5, -3,
              filters=[cond("order_number", "={{ $('Decide').first().json.order_number }}")], executeOnce=True)
-    code(w, "Recheck 1", J.recheck("Decide"), 6.5, -4, executeOnce=True)
+    code(w, "Recheck 1", J.recheck("Decide"), 6.5, -4)
     if_true(w, "Still newest 1?", "={{ $json.action === 'write' }}", 6.5, -5)
     code(w, "Contact request", J.CONTACT_REQUEST, 7, -2)
     run_workflow(w, "Write contact", "hubspot-call", 8, -2)
@@ -264,7 +273,7 @@ def build_core(live):
     if_true(w, "Contact ok?", "={{ $json.action === 'write' }}", 10, -2)
     get_rows(w, "Recheck ledger 2", "q129_ledger", 10.5, -3,
              filters=[cond("order_number", "={{ $('After contact').first().json.order_number }}")], executeOnce=True)
-    code(w, "Recheck 2", J.recheck("After contact"), 10.5, -4, executeOnce=True)
+    code(w, "Recheck 2", J.recheck("After contact"), 10.5, -4)
     if_true(w, "Still newest 2?", "={{ $json.action === 'write' }}", 10.5, -5)
     code(w, "Deal request", J.DEAL_REQUEST, 11, -2)
     run_workflow(w, "Write deal", "hubspot-call", 12, -2)
@@ -276,14 +285,14 @@ def build_core(live):
     if_true(w, "Link ok?", "={{ $json.action === 'write' }}", 18, -2)
     get_rows(w, "Recheck ledger 3", "q129_ledger", 18.5, -3,
              filters=[cond("order_number", "={{ $('After link').first().json.order_number }}")], executeOnce=True)
-    code(w, "Ledger row", J.LEDGER_ROW, 19, -2, executeOnce=True)
+    code(w, "Ledger row", J.LEDGER_ROW, 19, -2)
     if_true(w, "Ledger not newer?", "={{ $json.write === true }}", 19.5, -3)
     upsert_rows(w, "Upsert ledger", "q129_ledger", "order_number", "={{ $json.order_number }}",
                 {c: "={{ $json.%s }}" % c for c in ("order_number", "version", "data_hash", "updated_at")}, 20, -2)
     get_rows(w, "Find open rows", "q129_attention", 21, -2,
              filters=[cond("order_number", "={{ $('After link').first().json.order_number }}"),
                       cond("state", "open")], executeOnce=True)
-    code(w, "Rows to close", J.ROWS_TO_CLOSE.replace("__STATE__", "After link"), 22, -2, executeOnce=True)
+    code(w, "Rows to close", J.ROWS_TO_CLOSE.replace("__STATE__", "After link"), 22, -2)
     close_values = {c: "={{ $json.%s }}" % c for c in ("state", "closed_by", "closed_at", "closed_request")}
     update_rows(w, "Close rows", "q129_attention", "={{ $json.row_id }}", close_values, 23, -2)
     code(w, "Write done", J.STEP_DONE.replace("__STATE__", "After link").replace("__SUFFIX__", ""), 24, -2,
@@ -295,7 +304,7 @@ def build_core(live):
     get_rows(w, "Find open rows (skip)", "q129_attention", 8, 0,
              filters=[cond("order_number", "={{ $('Skip state').first().json.order_number }}"),
                       cond("state", "open")], executeOnce=True)
-    code(w, "Rows to close (skip)", J.ROWS_TO_CLOSE.replace("__STATE__", "Skip state"), 9, 0, executeOnce=True)
+    code(w, "Rows to close (skip)", J.ROWS_TO_CLOSE.replace("__STATE__", "Skip state"), 9, 0)
     update_rows(w, "Close rows (skip)", "q129_attention", "={{ $json.row_id }}", close_values, 10, 0)
     code(w, "Skip done", J.STEP_DONE.replace("__STATE__", "Skip state").replace("__SUFFIX__", " (skip)"), 11, 0,
          executeOnce=True)
@@ -365,7 +374,9 @@ def build_entry(live):
     error_workflow(w)
     raw_webhook(w, "Order in", "q129-order", 0)
     code(w, "Read request", J.READ_REQUEST, 1)
-    sign_body(w, "Sign body", 2)
+    if_true(w, "Has body?", "={{ $json.bytes > 0 }}", 1.5)
+    sign_body(w, "Sign body", 2, -0.5)
+    sign_empty(w, "Sign empty body", 2, 0.5)
     code(w, "Gate", J.GATE, 3)
     if_true(w, "Accepted?", "={{ $json.result === 'accepted' }}", 4)
     respond(w, "Answer 200", "={{ JSON.stringify({ ok: true }) }}", "={{ 200 }}", 5, -1)
@@ -376,7 +387,12 @@ def build_entry(live):
             "={{ $('Gate').first().json.http }}", 5, 1)
     code(w, "Entry log", J.ENTRY_LOG, 6, 1)
     insert(w, "Write entry log", "q129_log", 7, 1)
-    w.chain("Order in", "Read request", "Sign body", "Gate", "Accepted?")
+    w.chain("Order in", "Read request", "Has body?")
+    w.link("Has body?", "Sign body", 0)
+    w.link("Has body?", "Sign empty body", 1)
+    w.link("Sign body", "Gate")
+    w.link("Sign empty body", "Gate")
+    w.chain("Gate", "Accepted?")
     w.link("Accepted?", "Answer 200", 0)
     w.link("Accepted?", "Answer", 1)
     w.chain("Answer 200", "Core input", "Run core")
@@ -400,7 +416,7 @@ def build_replay(live):
         webhookId=str(uuid.uuid5(uuid.NAMESPACE_URL, "q129/q129-replay")))
     code(w, "Replay request", J.REPLAY_REQUEST, 1)
     get_rows(w, "Find row", "q129_attention", 2, filters=[cond("id", "={{ $json.row_id }}")], executeOnce=True)
-    code(w, "Replay decide", J.REPLAY_DECIDE, 3, executeOnce=True)
+    code(w, "Replay decide", J.REPLAY_DECIDE, 3)
     if_true(w, "Replay allowed?", "={{ $json.go === true }}", 4)
     code(w, "Core input", "return [{ json: $json.core }];", 5, -1)
     run_workflow(w, "Run core", "core", 6, -1)

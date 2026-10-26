@@ -156,8 +156,7 @@
    ],
    "parameters": {
     "jsCode": "const R = $('Start').first().json;\nconst out = Object.assign({}, $('Check 1').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nif (led && led.version > R.version) { out.done = true; out.skip = true; out.reason = 'skipped_older'; }\nreturn [{ json: out }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "ab93f897-8758-598c-8700-974b1fd8f8d7",
@@ -336,8 +335,7 @@
    ],
    "parameters": {
     "jsCode": "const R = $('Start').first().json;\nconst out = Object.assign({}, $('Check 2').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nif (led && led.version > R.version) { out.done = true; out.skip = true; out.reason = 'skipped_older'; }\nreturn [{ json: out }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "de11c435-f4f4-5e43-9383-67f5516653e6",

@@ -33,11 +33,13 @@ return [{ json: {
 }, binary: item.binary }];
 """
 
-# After the Crypto node (HMAC SHA256, base64, credential "Crypto WooCommerce n8n-data-sync").
+# After the Crypto node (HMAC SHA256, base64, credential "Crypto WooCommerce n8n-data-sync"). The request fields come
+# from "Read request": a failed Crypto node outputs only {error}, which would lose them (R3-03).
 GATE = HELPERS + r"""
-const it = $input.first().json;
+const it = $('Read request').first().json;
 const eq = (a, b) => { let d = a.length ^ b.length; for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; };
-const want = typeof it.signature === 'string' ? it.signature : '';
+const signed = $input.first().json;
+const want = typeof signed.signature === 'string' ? signed.signature : '';
 let http = 200, result = 'accepted', reason = null;
 if (it.bytes > 262144) { http = 413; result = 'rejected'; reason = 'too_large'; }
 else if (/^webhook_id=[0-9]+$/.test(it.text)) { result = 'ignored'; reason = 'ping'; }

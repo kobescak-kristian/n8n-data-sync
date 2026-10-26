@@ -3,7 +3,7 @@
  "set": "visible",
  "rules": "tests/CASES.md",
  "generator": "tests/make_cases.py",
- "case_count": 67,
+ "case_count": 76,
  "cases": [
   {
    "id": "N01",
@@ -2641,6 +2641,137 @@
    }
   },
   {
+   "id": "U07",
+   "kind": "U",
+   "title": "Customer corrects the e-mail in an update: deal linked to both contacts",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H1",
+    "H5"
+   ],
+   "simulated": false,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "{\"id\":41307,\"parent_id\":0,\"number\":\"41307\",\"order_key\":\"wc_order_301eb74454e97\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-08T15:00:00\",\"date_created_gmt\":\"2026-10-08T13:00:00\",\"date_modified\":\"2026-10-08T15:00:06\",\"date_modified_gmt\":\"2026-10-08T13:00:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"20.00\",\"shipping_tax\":\"5.00\",\"cart_tax\":\"17.80\",\"total\":\"114.00\",\"total_tax\":\"22.80\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.58\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Nikola\",\"last_name\":\"Raji\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"nikola.rajic@post.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Nikola\",\"last_name\":\"Raji\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qd7e5815e460e073cb3cd96\",\"date_paid\":\"2026-10-08T15:00:40\",\"date_paid_gmt\":\"2026-10-08T13:00:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"b874d5df03e2799a695973d5d306d667\",\"meta_data\":[{\"id\":413071,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":413072,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":413071,\"name\":\"Commuter Helmet &ndash; Size M\",\"product_id\":202,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"71.20\",\"subtotal_tax\":\"17.80\",\"total\":\"71.20\",\"total_tax\":\"17.80\",\"taxes\":[{\"id\":1,\"total\":\"17.8\",\"subtotal\":\"17.8\"}],\"meta_data\":[],\"sku\":\"HB-HELM-M\",\"price\":71.2}],\"tax_lines\":[{\"id\":413078,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"17.80\",\"shipping_tax_total\":\"5.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":413079,\"method_title\":\"Flat rate\",\"method_id\":\"flat_rate\",\"total\":\"20.00\",\"total_tax\":\"5.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41307\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "1601acaf633b62e80b599363911b70a2",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "created"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    },
+    {
+     "step": 2,
+     "type": "webhook",
+     "topic": "order.updated",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "{\"id\":41307,\"parent_id\":0,\"number\":\"41307\",\"order_key\":\"wc_order_301eb74454e97\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-08T15:00:00\",\"date_created_gmt\":\"2026-10-08T13:00:00\",\"date_modified\":\"2026-10-08T17:00:00\",\"date_modified_gmt\":\"2026-10-08T15:00:00\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"20.00\",\"shipping_tax\":\"5.00\",\"cart_tax\":\"17.80\",\"total\":\"114.00\",\"total_tax\":\"22.80\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.58\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Nikola\",\"last_name\":\"Raji\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"nikola.rajic@mail.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Nikola\",\"last_name\":\"Raji\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qd7e5815e460e073cb3cd96\",\"date_paid\":\"2026-10-08T15:00:40\",\"date_paid_gmt\":\"2026-10-08T13:00:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"b874d5df03e2799a695973d5d306d667\",\"meta_data\":[{\"id\":413071,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":413072,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":413071,\"name\":\"Commuter Helmet &ndash; Size M\",\"product_id\":202,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"71.20\",\"subtotal_tax\":\"17.80\",\"total\":\"71.20\",\"total_tax\":\"17.80\",\"taxes\":[{\"id\":1,\"total\":\"17.8\",\"subtotal\":\"17.8\"}],\"meta_data\":[],\"sku\":\"HB-HELM-M\",\"price\":71.2}],\"tax_lines\":[{\"id\":413078,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"17.80\",\"shipping_tax_total\":\"5.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":413079,\"method_title\":\"Flat rate\",\"method_id\":\"flat_rate\",\"total\":\"20.00\",\"total_tax\":\"5.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41307\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "95203fc22dd46a0bc0b99553f2fcf595",
+     "webhook_id": 15,
+     "expect": {
+      "http": 200,
+      "result": [
+       "updated"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "nikola.rajic@mail.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "nikola.rajic@mail.harbour-sync.example.com",
+       "first_name": "Nikola",
+       "last_name": "Raji\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     },
+     {
+      "email": "nikola.rajic@post.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "nikola.rajic@post.harbour-sync.example.com",
+       "first_name": "Nikola",
+       "last_name": "Raji\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41307",
+      "count": 1,
+      "fields": {
+       "order_number": "41307",
+       "name": "Order #41307",
+       "amount": "114.00",
+       "currency": "EUR",
+       "stage": "Closed Won",
+       "order_date": "2026-10-08T13:00:00Z",
+       "modified": "2026-10-08T15:00:00Z"
+      },
+      "contacts": [
+       "nikola.rajic@mail.harbour-sync.example.com",
+       "nikola.rajic@post.harbour-sync.example.com"
+      ]
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41307",
+      "modified": "2026-10-08T15:00:00Z"
+     }
+    ],
+    "attention_rows": [],
+    "alerts": [],
+    "summary_posts": 0
+   }
+  },
+  {
    "id": "D01",
    "kind": "D",
    "title": "Same event delivered twice",
@@ -5245,6 +5376,134 @@
    }
   },
   {
+   "id": "A07",
+   "kind": "A",
+   "title": "Signed empty body (not valid JSON)",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H3",
+    "H4"
+   ],
+   "simulated": false,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "",
+     "delivery_id": "a38fa69f520515f22a2c7c22fde026fe",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "not_json"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": null,
+        "reason": "not_json"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [],
+    "deals": [],
+    "ledger": [],
+    "attention_rows": [
+     {
+      "from_step": 1,
+      "order": null,
+      "reason": "not_json",
+      "reasons": [
+       "not_json"
+      ],
+      "state": "open",
+      "closed_by": null,
+      "closed_at_step": null,
+      "replays": 0
+     }
+    ],
+    "alerts": [
+     {
+      "type": "attention",
+      "order": null,
+      "reason": "not_json",
+      "step": 1
+     }
+    ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "A08",
+   "kind": "A",
+   "title": "Empty body without a signature",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H3",
+    "H4"
+   ],
+   "simulated": false,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "none",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "",
+     "delivery_id": "d7f1bc871b0e6d222b1817aed56a6103",
+     "webhook_id": 14,
+     "expect": {
+      "http": 401,
+      "result": [
+       "rejected"
+      ],
+      "reasons": [
+       "no_signature"
+      ],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [],
+    "deals": [],
+    "ledger": [],
+    "attention_rows": [],
+    "alerts": [],
+    "summary_posts": 0
+   }
+  },
+  {
    "id": "T01",
    "kind": "T",
    "title": "HubSpot rate limit (429, wait 2 s) then OK",
@@ -5850,6 +6109,242 @@
      {
       "type": "attention",
       "order": "41806",
+      "reason": "crm_bad_request",
+      "step": 1
+     }
+    ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "T07",
+   "kind": "T",
+   "title": "Contact connection closed then OK, deal 403: no retry",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H2",
+    "H3",
+    "H4"
+   ],
+   "simulated": true,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "close",
+       "pass"
+      ],
+      "deals": [
+       "403"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41807,\"parent_id\":0,\"number\":\"41807\",\"order_key\":\"wc_order_e0d339509136d\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-13T10:00:00\",\"date_created_gmt\":\"2026-10-13T08:00:00\",\"date_modified\":\"2026-10-13T10:00:06\",\"date_modified_gmt\":\"2026-10-13T08:00:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"650.00\",\"total\":\"3250.00\",\"total_tax\":\"650.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.58\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Martina\",\"last_name\":\"Pavi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"kristina.mlinar@mail.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Martina\",\"last_name\":\"Pavi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qcaa3cb204dfaf79cd670e0\",\"date_paid\":\"2026-10-13T10:00:40\",\"date_paid_gmt\":\"2026-10-13T08:00:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"8870f76779e7c585e74cdb4f300921f1\",\"meta_data\":[{\"id\":418071,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":418072,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":418071,\"name\":\"Coastline Trekking E-Bike\",\"product_id\":102,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"2600.00\",\"subtotal_tax\":\"650.00\",\"total\":\"2600.00\",\"total_tax\":\"650.00\",\"taxes\":[{\"id\":1,\"total\":\"650\",\"subtotal\":\"650\"}],\"meta_data\":[],\"sku\":\"HB-TREK-700\",\"price\":2600}],\"tax_lines\":[{\"id\":418078,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"650.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":418079,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41807\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "e224602c77b55c559f9eed945e189ed2",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_auth_error"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41807",
+        "reason": "crm_auth_error"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": {
+       "contacts": 2,
+       "deals": 1
+      }
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "kristina.mlinar@mail.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "kristina.mlinar@mail.harbour-sync.example.com",
+       "first_name": "Martina",
+       "last_name": "Pavi\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41807",
+      "count": 0,
+      "fields": null,
+      "contacts": []
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41807",
+      "modified": null
+     }
+    ],
+    "attention_rows": [
+     {
+      "from_step": 1,
+      "order": "41807",
+      "reason": "crm_auth_error",
+      "reasons": [
+       "crm_auth_error"
+      ],
+      "state": "open",
+      "closed_by": null,
+      "closed_at_step": null,
+      "replays": 0
+     }
+    ],
+    "alerts": [
+     {
+      "type": "attention",
+      "order": "41807",
+      "reason": "crm_auth_error",
+      "step": 1
+     }
+    ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "T08",
+   "kind": "T",
+   "title": "Contact answer times out after HubSpot saved it, deal 404: no retry",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H2",
+    "H3",
+    "H4"
+   ],
+   "simulated": true,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "timeout_after_forward",
+       "pass"
+      ],
+      "deals": [
+       "404"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41808,\"parent_id\":0,\"number\":\"41808\",\"order_key\":\"wc_order_cb35159da2de5\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-13T10:10:00\",\"date_created_gmt\":\"2026-10-13T08:10:00\",\"date_modified\":\"2026-10-13T10:10:06\",\"date_modified_gmt\":\"2026-10-13T08:10:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"650.00\",\"total\":\"3250.00\",\"total_tax\":\"650.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.59\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Martina\",\"last_name\":\"Pavi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"zoran.bilic@post.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Martina\",\"last_name\":\"Pavi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qef9984d288f13e7a6d5009\",\"date_paid\":\"2026-10-13T10:10:40\",\"date_paid_gmt\":\"2026-10-13T08:10:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"1d76ffc82aa2886416809b12d5e65f5b\",\"meta_data\":[{\"id\":418081,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":418082,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":418081,\"name\":\"Coastline Trekking E-Bike\",\"product_id\":102,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"2600.00\",\"subtotal_tax\":\"650.00\",\"total\":\"2600.00\",\"total_tax\":\"650.00\",\"taxes\":[{\"id\":1,\"total\":\"650\",\"subtotal\":\"650\"}],\"meta_data\":[],\"sku\":\"HB-TREK-700\",\"price\":2600}],\"tax_lines\":[{\"id\":418088,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"650.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":418089,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41808\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "386620316362a20595670f9357557c6a",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_bad_request"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41808",
+        "reason": "crm_bad_request"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": {
+       "contacts": 2,
+       "deals": 1
+      }
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "zoran.bilic@post.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "zoran.bilic@post.harbour-sync.example.com",
+       "first_name": "Martina",
+       "last_name": "Pavi\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41808",
+      "count": 0,
+      "fields": null,
+      "contacts": []
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41808",
+      "modified": null
+     }
+    ],
+    "attention_rows": [
+     {
+      "from_step": 1,
+      "order": "41808",
+      "reason": "crm_bad_request",
+      "reasons": [
+       "crm_bad_request"
+      ],
+      "state": "open",
+      "closed_by": null,
+      "closed_at_step": null,
+      "replays": 0
+     }
+    ],
+    "alerts": [
+     {
+      "type": "attention",
+      "order": "41808",
       "reason": "crm_bad_request",
       "step": 1
      }
@@ -6667,6 +7162,778 @@
       "step": 2
      }
     ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "R06",
+   "kind": "R",
+   "title": "Two open rows for one order, the shop resends: both close by sync",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H2",
+    "H4"
+   ],
+   "simulated": true,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "503",
+       "503",
+       "503"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41906,\"parent_id\":0,\"number\":\"41906\",\"order_key\":\"wc_order_0c28fd69b05e1\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T09:50:00\",\"date_created_gmt\":\"2026-10-14T07:50:00\",\"date_modified\":\"2026-10-14T09:50:06\",\"date_modified_gmt\":\"2026-10-14T07:50:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.157\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"mia.grgic@mail.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Q8cb2acf08f127b5b12280b\",\"date_paid\":\"2026-10-14T09:50:40\",\"date_paid_gmt\":\"2026-10-14T07:50:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"006320a81d002fb211a2c4e90e663447\",\"meta_data\":[{\"id\":419061,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419062,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419061,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419068,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419069,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41906\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "267cbe4c5cad429b2060e97c18ccfff7",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41906",
+        "reason": "crm_retry_exhausted"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": {
+       "contacts": 3,
+       "deals": 0
+      }
+     }
+    },
+    {
+     "step": 2,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "503",
+       "503",
+       "503"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41906,\"parent_id\":0,\"number\":\"41906\",\"order_key\":\"wc_order_0c28fd69b05e1\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T09:50:00\",\"date_created_gmt\":\"2026-10-14T07:50:00\",\"date_modified\":\"2026-10-14T09:50:06\",\"date_modified_gmt\":\"2026-10-14T07:50:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.157\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"mia.grgic@mail.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Q8cb2acf08f127b5b12280b\",\"date_paid\":\"2026-10-14T09:50:40\",\"date_paid_gmt\":\"2026-10-14T07:50:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"006320a81d002fb211a2c4e90e663447\",\"meta_data\":[{\"id\":419061,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419062,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419061,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419068,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419069,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41906\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "2423173300cf18df8f05a8d185e611a4",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41906",
+        "reason": "crm_retry_exhausted"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": {
+       "contacts": 3,
+       "deals": 0
+      }
+     }
+    },
+    {
+     "step": 3,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "{\"id\":41906,\"parent_id\":0,\"number\":\"41906\",\"order_key\":\"wc_order_0c28fd69b05e1\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T09:50:00\",\"date_created_gmt\":\"2026-10-14T07:50:00\",\"date_modified\":\"2026-10-14T09:50:06\",\"date_modified_gmt\":\"2026-10-14T07:50:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.157\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"mia.grgic@mail.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Q8cb2acf08f127b5b12280b\",\"date_paid\":\"2026-10-14T09:50:40\",\"date_paid_gmt\":\"2026-10-14T07:50:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"006320a81d002fb211a2c4e90e663447\",\"meta_data\":[{\"id\":419061,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419062,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419061,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419068,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419069,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41906\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "afb85606df89cf9060ed49d1f7565bae",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "created"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [
+       1,
+       2
+      ],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "mia.grgic@mail.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "mia.grgic@mail.harbour-sync.example.com",
+       "first_name": "Lana",
+       "last_name": "Perkovi\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41906",
+      "count": 1,
+      "fields": {
+       "order_number": "41906",
+       "name": "Order #41906",
+       "amount": "4190.00",
+       "currency": "EUR",
+       "stage": "Closed Won",
+       "order_date": "2026-10-14T07:50:00Z",
+       "modified": "2026-10-14T07:50:06Z"
+      },
+      "contacts": [
+       "mia.grgic@mail.harbour-sync.example.com"
+      ]
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41906",
+      "modified": "2026-10-14T07:50:06Z"
+     }
+    ],
+    "attention_rows": [
+     {
+      "from_step": 1,
+      "order": "41906",
+      "reason": "crm_retry_exhausted",
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "state": "closed",
+      "closed_by": "sync",
+      "closed_at_step": 3,
+      "replays": 0
+     },
+     {
+      "from_step": 2,
+      "order": "41906",
+      "reason": "crm_retry_exhausted",
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "state": "closed",
+      "closed_by": "sync",
+      "closed_at_step": 3,
+      "replays": 0
+     }
+    ],
+    "alerts": [
+     {
+      "type": "attention",
+      "order": "41906",
+      "reason": "crm_retry_exhausted",
+      "step": 1
+     },
+     {
+      "type": "attention",
+      "order": "41906",
+      "reason": "crm_retry_exhausted",
+      "step": 2
+     }
+    ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "R07",
+   "kind": "R",
+   "title": "Two open rows, replay of the second: it closes by replay, the first by sync",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H2",
+    "H4"
+   ],
+   "simulated": true,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "503",
+       "503",
+       "503"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41907,\"parent_id\":0,\"number\":\"41907\",\"order_key\":\"wc_order_e770b253759b7\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:00:00\",\"date_created_gmt\":\"2026-10-14T08:00:00\",\"date_modified\":\"2026-10-14T10:00:06\",\"date_modified_gmt\":\"2026-10-14T08:00:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.158\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"karlo.vidovic@post.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Q4d6dc2cec4c229301999e8\",\"date_paid\":\"2026-10-14T10:00:40\",\"date_paid_gmt\":\"2026-10-14T08:00:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"ca904c1dfe5c1e4415ce964959278c45\",\"meta_data\":[{\"id\":419071,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419072,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419071,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419078,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419079,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41907\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "7e9696f780f008f5f03c91869a726f0b",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41907",
+        "reason": "crm_retry_exhausted"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": {
+       "contacts": 3,
+       "deals": 0
+      }
+     }
+    },
+    {
+     "step": 2,
+     "type": "webhook",
+     "topic": "order.updated",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "503",
+       "503",
+       "503"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41907,\"parent_id\":0,\"number\":\"41907\",\"order_key\":\"wc_order_e770b253759b7\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"completed\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:00:00\",\"date_created_gmt\":\"2026-10-14T08:00:00\",\"date_modified\":\"2026-10-14T12:00:00\",\"date_modified_gmt\":\"2026-10-14T10:00:00\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.158\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"karlo.vidovic@post.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Q4d6dc2cec4c229301999e8\",\"date_paid\":\"2026-10-14T10:00:40\",\"date_paid_gmt\":\"2026-10-14T08:00:40\",\"date_completed\":\"2026-10-14T12:00:00\",\"date_completed_gmt\":\"2026-10-14T10:00:00\",\"cart_hash\":\"ca904c1dfe5c1e4415ce964959278c45\",\"meta_data\":[{\"id\":419071,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419072,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419071,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419078,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419079,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41907\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "e2f136d4404d049cfc4298d72847be7a",
+     "webhook_id": 15,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41907",
+        "reason": "crm_retry_exhausted"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": {
+       "contacts": 3,
+       "deals": 0
+      }
+     }
+    },
+    {
+     "step": 3,
+     "type": "replay",
+     "row_from_step": 2,
+     "faults": null,
+     "expect": {
+      "http": 200,
+      "result": [
+       "created"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [
+       1,
+       2
+      ],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "karlo.vidovic@post.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "karlo.vidovic@post.harbour-sync.example.com",
+       "first_name": "Lana",
+       "last_name": "Perkovi\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41907",
+      "count": 1,
+      "fields": {
+       "order_number": "41907",
+       "name": "Order #41907",
+       "amount": "4190.00",
+       "currency": "EUR",
+       "stage": "Closed Won",
+       "order_date": "2026-10-14T08:00:00Z",
+       "modified": "2026-10-14T10:00:00Z"
+      },
+      "contacts": [
+       "karlo.vidovic@post.harbour-sync.example.com"
+      ]
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41907",
+      "modified": "2026-10-14T10:00:00Z"
+     }
+    ],
+    "attention_rows": [
+     {
+      "from_step": 1,
+      "order": "41907",
+      "reason": "crm_retry_exhausted",
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "state": "closed",
+      "closed_by": "sync",
+      "closed_at_step": 3,
+      "replays": 0
+     },
+     {
+      "from_step": 2,
+      "order": "41907",
+      "reason": "crm_retry_exhausted",
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "state": "closed",
+      "closed_by": "replay",
+      "closed_at_step": 3,
+      "replays": 0
+     }
+    ],
+    "alerts": [
+     {
+      "type": "attention",
+      "order": "41907",
+      "reason": "crm_retry_exhausted",
+      "step": 1
+     },
+     {
+      "type": "attention",
+      "order": "41907",
+      "reason": "crm_retry_exhausted",
+      "step": 2
+     }
+    ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "R08",
+   "kind": "R",
+   "title": "Two open rows, only the older version is resent: only its row closes",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H2",
+    "H4"
+   ],
+   "simulated": true,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.updated",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "503",
+       "503",
+       "503"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41908,\"parent_id\":0,\"number\":\"41908\",\"order_key\":\"wc_order_b8773bb535dd3\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"completed\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:10:00\",\"date_created_gmt\":\"2026-10-14T08:10:00\",\"date_modified\":\"2026-10-14T12:00:00\",\"date_modified_gmt\":\"2026-10-14T10:00:00\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.159\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"lucija.bozic@inbox.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qa6da51a72b2d11c227e398\",\"date_paid\":\"2026-10-14T10:10:40\",\"date_paid_gmt\":\"2026-10-14T08:10:40\",\"date_completed\":\"2026-10-14T12:00:00\",\"date_completed_gmt\":\"2026-10-14T10:00:00\",\"cart_hash\":\"a34335a3bede0f17a7af733b697ad848\",\"meta_data\":[{\"id\":419081,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419082,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419081,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419088,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419089,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41908\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "2656110d1ff275cb890761d2e95df7f6",
+     "webhook_id": 15,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41908",
+        "reason": "crm_retry_exhausted"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": {
+       "contacts": 3,
+       "deals": 0
+      }
+     }
+    },
+    {
+     "step": 2,
+     "type": "webhook",
+     "topic": "order.updated",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": {
+      "contacts": [
+       "503",
+       "503",
+       "503"
+      ]
+     },
+     "force_crash": false,
+     "body": "{\"id\":41908,\"parent_id\":0,\"number\":\"41908\",\"order_key\":\"wc_order_b8773bb535dd3\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"on-hold\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:10:00\",\"date_created_gmt\":\"2026-10-14T08:10:00\",\"date_modified\":\"2026-10-14T11:00:00\",\"date_modified_gmt\":\"2026-10-14T09:00:00\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.159\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"lucija.bozic@inbox.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qa6da51a72b2d11c227e398\",\"date_paid\":\"2026-10-14T10:10:40\",\"date_paid_gmt\":\"2026-10-14T08:10:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"a34335a3bede0f17a7af733b697ad848\",\"meta_data\":[{\"id\":419081,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419082,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419081,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419088,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419089,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41908\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "245784739700ddfdf25469a2c57ccaaa",
+     "webhook_id": 15,
+     "expect": {
+      "http": 200,
+      "result": [
+       "needs_attention"
+      ],
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "alerts": [
+       {
+        "type": "attention",
+        "order": "41908",
+        "reason": "crm_retry_exhausted"
+       }
+      ],
+      "attention_row": "opens",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": {
+       "contacts": 3,
+       "deals": 0
+      }
+     }
+    },
+    {
+     "step": 3,
+     "type": "webhook",
+     "topic": "order.updated",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "{\"id\":41908,\"parent_id\":0,\"number\":\"41908\",\"order_key\":\"wc_order_b8773bb535dd3\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"on-hold\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:10:00\",\"date_created_gmt\":\"2026-10-14T08:10:00\",\"date_modified\":\"2026-10-14T11:00:00\",\"date_modified_gmt\":\"2026-10-14T09:00:00\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.159\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"lucija.bozic@inbox.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qa6da51a72b2d11c227e398\",\"date_paid\":\"2026-10-14T10:10:40\",\"date_paid_gmt\":\"2026-10-14T08:10:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"a34335a3bede0f17a7af733b697ad848\",\"meta_data\":[{\"id\":419081,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419082,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419081,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419088,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419089,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41908\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "655e6900d2e56fc55befa2e08f59b9be",
+     "webhook_id": 15,
+     "expect": {
+      "http": 200,
+      "result": [
+       "created"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [
+       2
+      ],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    },
+    {
+     "step": 4,
+     "type": "webhook",
+     "topic": "order.updated",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "{\"id\":41908,\"parent_id\":0,\"number\":\"41908\",\"order_key\":\"wc_order_b8773bb535dd3\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"completed\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:10:00\",\"date_created_gmt\":\"2026-10-14T08:10:00\",\"date_modified\":\"2026-10-14T12:00:00\",\"date_modified_gmt\":\"2026-10-14T10:00:00\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.159\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"lucija.bozic@inbox.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qa6da51a72b2d11c227e398\",\"date_paid\":\"2026-10-14T10:10:40\",\"date_paid_gmt\":\"2026-10-14T08:10:40\",\"date_completed\":\"2026-10-14T12:00:00\",\"date_completed_gmt\":\"2026-10-14T10:00:00\",\"cart_hash\":\"a34335a3bede0f17a7af733b697ad848\",\"meta_data\":[{\"id\":419081,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419082,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419081,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419088,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419089,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41908\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "57222387382eb319e9760761135db8b0",
+     "webhook_id": 15,
+     "expect": {
+      "http": 200,
+      "result": [
+       "updated"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [
+       1
+      ],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "lucija.bozic@inbox.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "lucija.bozic@inbox.harbour-sync.example.com",
+       "first_name": "Lana",
+       "last_name": "Perkovi\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41908",
+      "count": 1,
+      "fields": {
+       "order_number": "41908",
+       "name": "Order #41908",
+       "amount": "4190.00",
+       "currency": "EUR",
+       "stage": "Closed Won",
+       "order_date": "2026-10-14T08:10:00Z",
+       "modified": "2026-10-14T10:00:00Z"
+      },
+      "contacts": [
+       "lucija.bozic@inbox.harbour-sync.example.com"
+      ]
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41908",
+      "modified": "2026-10-14T10:00:00Z"
+     }
+    ],
+    "attention_rows": [
+     {
+      "from_step": 1,
+      "order": "41908",
+      "reason": "crm_retry_exhausted",
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "state": "closed",
+      "closed_by": "sync",
+      "closed_at_step": 4,
+      "replays": 0
+     },
+     {
+      "from_step": 2,
+      "order": "41908",
+      "reason": "crm_retry_exhausted",
+      "reasons": [
+       "crm_retry_exhausted"
+      ],
+      "state": "closed",
+      "closed_by": "sync",
+      "closed_at_step": 3,
+      "replays": 0
+     }
+    ],
+    "alerts": [
+     {
+      "type": "attention",
+      "order": "41908",
+      "reason": "crm_retry_exhausted",
+      "step": 1
+     },
+     {
+      "type": "attention",
+      "order": "41908",
+      "reason": "crm_retry_exhausted",
+      "step": 2
+     }
+    ],
+    "summary_posts": 0
+   }
+  },
+  {
+   "id": "R09",
+   "kind": "R",
+   "title": "Replay of a step that opened no row",
+   "related_to": [],
+   "depends_on": [],
+   "hard_rules": [
+    "H2",
+    "H4"
+   ],
+   "simulated": false,
+   "gated": true,
+   "events": [
+    {
+     "step": 1,
+     "type": "webhook",
+     "topic": "order.created",
+     "sign": "valid",
+     "tamper": null,
+     "content_type": "application/json",
+     "parallel": null,
+     "faults": null,
+     "force_crash": false,
+     "body": "{\"id\":41909,\"parent_id\":0,\"number\":\"41909\",\"order_key\":\"wc_order_eac6adc7c167f\",\"created_via\":\"checkout\",\"version\":\"11.2.1\",\"status\":\"processing\",\"currency\":\"EUR\",\"date_created\":\"2026-10-14T10:20:00\",\"date_created_gmt\":\"2026-10-14T08:20:00\",\"date_modified\":\"2026-10-14T10:20:06\",\"date_modified_gmt\":\"2026-10-14T08:20:06\",\"discount_total\":\"0.00\",\"discount_tax\":\"0.00\",\"shipping_total\":\"0.00\",\"shipping_tax\":\"0.00\",\"cart_tax\":\"838.00\",\"total\":\"4190.00\",\"total_tax\":\"838.00\",\"prices_include_tax\":true,\"customer_id\":0,\"customer_ip_address\":\"203.0.113.160\",\"customer_user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/141.0.0.0 Safari\\/537.36\",\"customer_note\":\"\",\"billing\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\",\"email\":\"dora.matkovic@mail.harbour-sync.example.com\",\"phone\":\"+385 91 234 5678\"},\"shipping\":{\"first_name\":\"Lana\",\"last_name\":\"Perkovi\\u0107\",\"company\":\"\",\"address_1\":\"Obala Lazareta 14\",\"address_2\":\"\",\"city\":\"Split\",\"state\":\"\",\"postcode\":\"21000\",\"country\":\"HR\"},\"payment_method\":\"stripe\",\"payment_method_title\":\"Credit Card (Stripe)\",\"transaction_id\":\"pi_3Qb32b2b2e7aac01a1ebab47\",\"date_paid\":\"2026-10-14T10:20:40\",\"date_paid_gmt\":\"2026-10-14T08:20:40\",\"date_completed\":null,\"date_completed_gmt\":null,\"cart_hash\":\"7a4127a65ee360ef0110b01a23ab04a3\",\"meta_data\":[{\"id\":419091,\"key\":\"_wc_order_attribution_source_type\",\"value\":\"typein\"},{\"id\":419092,\"key\":\"_wc_order_attribution_device_type\",\"value\":\"Desktop\"}],\"line_items\":[{\"id\":419091,\"name\":\"Portwell Cargo E-Bike\",\"product_id\":103,\"variation_id\":0,\"quantity\":1,\"tax_class\":\"\",\"subtotal\":\"3352.00\",\"subtotal_tax\":\"838.00\",\"total\":\"3352.00\",\"total_tax\":\"838.00\",\"taxes\":[{\"id\":1,\"total\":\"838\",\"subtotal\":\"838\"}],\"meta_data\":[],\"sku\":\"HB-CARGO-2\",\"price\":3352}],\"tax_lines\":[{\"id\":419098,\"rate_code\":\"VAT-1\",\"rate_id\":1,\"label\":\"VAT 25%\",\"compound\":false,\"tax_total\":\"838.00\",\"shipping_tax_total\":\"0.00\",\"meta_data\":[]}],\"shipping_lines\":[{\"id\":419099,\"method_title\":\"Free shipping\",\"method_id\":\"free_shipping\",\"total\":\"0.00\",\"total_tax\":\"0.00\",\"taxes\":[],\"meta_data\":[]}],\"fee_lines\":[],\"coupon_lines\":[],\"refunds\":[],\"_links\":{\"self\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\\/41909\"}],\"collection\":[{\"href\":\"https:\\/\\/harbour-ebikes.example.com\\/wp-json\\/wc\\/v3\\/orders\"}]}}",
+     "delivery_id": "9f219a8f4607cb6164d451c036110bff",
+     "webhook_id": 14,
+     "expect": {
+      "http": 200,
+      "result": [
+       "created"
+      ],
+      "reasons": [],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": null,
+      "crm_write_attempts": null
+     }
+    },
+    {
+     "step": 2,
+     "type": "replay",
+     "row_from_step": 1,
+     "faults": null,
+     "expect": {
+      "http": 200,
+      "result": [
+       "replay_refused"
+      ],
+      "reasons": [
+       "row_not_found"
+      ],
+      "alerts": [],
+      "attention_row": "none",
+      "closes_rows_from_steps": [],
+      "hubspot_unchanged": true,
+      "crm_write_attempts": null
+     }
+    }
+   ],
+   "expected_final": {
+    "contacts": [
+     {
+      "email": "dora.matkovic@mail.harbour-sync.example.com",
+      "count": 1,
+      "fields": {
+       "email": "dora.matkovic@mail.harbour-sync.example.com",
+       "first_name": "Lana",
+       "last_name": "Perkovi\u0107",
+       "phone": "+385 91 234 5678",
+       "company": "",
+       "address": "Obala Lazareta 14",
+       "city": "Split",
+       "postcode": "21000",
+       "country": "HR",
+       "sync_source": "harbour-demo-shop"
+      }
+     }
+    ],
+    "deals": [
+     {
+      "order_number": "41909",
+      "count": 1,
+      "fields": {
+       "order_number": "41909",
+       "name": "Order #41909",
+       "amount": "4190.00",
+       "currency": "EUR",
+       "stage": "Closed Won",
+       "order_date": "2026-10-14T08:20:00Z",
+       "modified": "2026-10-14T08:20:06Z"
+      },
+      "contacts": [
+       "dora.matkovic@mail.harbour-sync.example.com"
+      ]
+     }
+    ],
+    "ledger": [
+     {
+      "order_number": "41909",
+      "modified": "2026-10-14T08:20:06Z"
+     }
+    ],
+    "attention_rows": [],
+    "alerts": [],
     "summary_posts": 0
    }
   },

@@ -35,19 +35,79 @@
    }
   },
   {
+   "id": "87cc9d0a-3e93-5d74-8704-beb0427d74fa",
+   "name": "Has body?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    360,
+    0
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "87cc9d0a-3e93-5d74-8704-beb0427d74fa",
+       "leftValue": "={{ $json.bytes > 0 }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "looseTypeValidation": true,
+    "options": {}
+   }
+  },
+  {
    "id": "f9c13386-1dac-55b8-a9ef-109bc82895ca",
    "name": "Sign body",
    "type": "n8n-nodes-base.crypto",
    "typeVersion": 2,
    "position": [
     480,
-    0
+    -85
    ],
    "parameters": {
     "action": "hmac",
     "type": "SHA256",
     "binaryData": true,
     "binaryPropertyName": "data",
+    "dataPropertyName": "signature",
+    "encoding": "base64"
+   },
+   "credentials": {
+    "crypto": {
+     "id": "__CRED:crypto__",
+     "name": "Crypto WooCommerce n8n-data-sync"
+    }
+   },
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "256e62d4-80b1-5329-b9d0-9e61072d61a9",
+   "name": "Sign empty body",
+   "type": "n8n-nodes-base.crypto",
+   "typeVersion": 2,
+   "position": [
+    480,
+    85
+   ],
+   "parameters": {
+    "action": "hmac",
+    "type": "SHA256",
+    "binaryData": false,
+    "value": "={{ '' }}",
     "dataPropertyName": "signature",
     "encoding": "base64"
    },
@@ -69,7 +129,7 @@
     0
    ],
    "parameters": {
-    "jsCode": "const nowIso = () => new Date().toISOString();\nconst cut = (x, n) => { const a = [...String(x === undefined || x === null ? '' : x)]; return a.length > n ? a.slice(0, n).join('') : a.join(''); };\n\nconst it = $input.first().json;\nconst eq = (a, b) => { let d = a.length ^ b.length; for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; };\nconst want = typeof it.signature === 'string' ? it.signature : '';\nlet http = 200, result = 'accepted', reason = null;\nif (it.bytes > 262144) { http = 413; result = 'rejected'; reason = 'too_large'; }\nelse if (/^webhook_id=[0-9]+$/.test(it.text)) { result = 'ignored'; reason = 'ping'; }\nelse if (!it.has_sig) { http = 401; result = 'rejected'; reason = 'no_signature'; }\nelse if (!want || !eq(it.sig, want)) { http = 401; result = 'rejected'; reason = 'bad_signature'; }\nelse if (it.topic !== 'order.created' && it.topic !== 'order.updated') { result = 'ignored'; reason = 'other_topic'; }\nconst request_id = it.request_id || it.delivery_id || ('exec-' + $execution.id);\nreturn [{ json: { http, result, reason, request_id, delivery_id: it.delivery_id, topic: it.topic,\n  received_ms: it.received_ms, body_text: result === 'accepted' ? it.text : '', test_crash: it.test_crash } }];\n"
+    "jsCode": "const nowIso = () => new Date().toISOString();\nconst cut = (x, n) => { const a = [...String(x === undefined || x === null ? '' : x)]; return a.length > n ? a.slice(0, n).join('') : a.join(''); };\n\nconst it = $('Read request').first().json;\nconst eq = (a, b) => { let d = a.length ^ b.length; for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0); return d === 0; };\nconst signed = $input.first().json;\nconst want = typeof signed.signature === 'string' ? signed.signature : '';\nlet http = 200, result = 'accepted', reason = null;\nif (it.bytes > 262144) { http = 413; result = 'rejected'; reason = 'too_large'; }\nelse if (/^webhook_id=[0-9]+$/.test(it.text)) { result = 'ignored'; reason = 'ping'; }\nelse if (!it.has_sig) { http = 401; result = 'rejected'; reason = 'no_signature'; }\nelse if (!want || !eq(it.sig, want)) { http = 401; result = 'rejected'; reason = 'bad_signature'; }\nelse if (it.topic !== 'order.created' && it.topic !== 'order.updated') { result = 'ignored'; reason = 'other_topic'; }\nconst request_id = it.request_id || it.delivery_id || ('exec-' + $execution.id);\nreturn [{ json: { http, result, reason, request_id, delivery_id: it.delivery_id, topic: it.topic,\n  received_ms: it.received_ms, body_text: result === 'accepted' ? it.text : '', test_crash: it.test_crash } }];\n"
    }
   },
   {
@@ -229,7 +289,25 @@
    "main": [
     [
      {
+      "node": "Has body?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Has body?": {
+   "main": [
+    [
+     {
       "node": "Sign body",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Sign empty body",
       "type": "main",
       "index": 0
      }
@@ -237,6 +315,17 @@
    ]
   },
   "Sign body": {
+   "main": [
+    [
+     {
+      "node": "Gate",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Sign empty body": {
    "main": [
     [
      {

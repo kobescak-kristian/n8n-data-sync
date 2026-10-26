@@ -167,16 +167,16 @@ Eval level: Decided Standard, owner, 2026-10-20 (CRM records keep a history and 
 | N | clean order, new customer | contact + deal created, all fields exact | 5 |
 | M | messy but valid: spaces, upper-case e-mail, accents and non-Latin names, phone formats, optional fields missing, guest checkout, total "1250.5" | synced with the cleaned values; nothing rejected | 8 |
 | E | existing customer: second order, same e-mail in another case, update without phone | same contact, new deal; existing phone kept | 6 |
-| U | order updates: status change, refund, edited total, an older update arriving late | deal updated; older update skipped | 6 |
+| U | order updates: status change, refund, edited total, an older update arriving late, e-mail corrected | deal updated; older update skipped | 7 |
 | D | duplicate orders: resent, sent twice at the same moment, resent after an update | one deal; skip reason "duplicate" | 6 |
 | F | missing required field (one case per field) | needs-attention + alert; nothing written | 7 |
 | V | invalid format: bad e-mail, negative total, "12,50", unknown currency, unknown status, bad date | needs-attention + alert; nothing written | 7 |
-| A | entry: no signature, wrong signature, body changed after signing, ping, other topic, not JSON | 401 or ignored; nothing written | 6 |
-| T | HubSpot errors (simulated through the fault proxy): 429 then OK, 5xx then OK, timeout then OK, 5xx every time, 401, 400 | retried and synced once; or needs-attention + alert, no retry on 4xx | 6 |
-| R | replay and fix at source: replay after an outage, replay twice, replay of a closed row, fixed order sent by the shop | synced once; row closed | 5 |
+| A | entry: no signature, wrong signature, body changed after signing, ping, other topic, not JSON, empty body | 401 or ignored; nothing written | 8 |
+| T | HubSpot errors (simulated through the fault proxy): 429 then OK, 5xx then OK, timeout then OK, 5xx every time, 401, 400, closed connection, 403, 404 | retried and synced once; or needs-attention + alert, no retry on 4xx | 8 |
+| R | replay and fix at source: replay after an outage, replay twice, replay of a closed row, fixed order sent by the shop, two open rows for one order, replay of a missing row | synced once; row closed | 9 |
 | S | alerts and summary: summary counts match the log, over-5-failures alert, forced crash in an automatic run alerts | as written | 5 |
 
-Visible total 67. Hold-out about 29 (at least 2 per kind; it brings every kind to at least 7). Total about 96, hold-out share about 30%.
+Visible total 76 (gate v4; 67 before). Hold-out about 33 (at least 2 per kind; it brings every kind to at least 7). Total about 109, hold-out share about 30%.
 
 - Eval config: `evals/eval_config.yaml` + `tests/CASES.md` (rules and the case format) + generator `tests/make_cases.py` (deterministic; checks the whole set every run and stops on duplicate case IDs, a shared order number or e-mail between cases that are not marked related, a missing dependency, or an unknown expected result; a test plants each mistake) — committed before the first workflow. WooCommerce payload shapes copied from the current WooCommerce REST API docs, checked on the day.
 - Results: `evals/RESULTS.md`, every run recorded, pass or fail. Hold-out opening: same procedure as item 3 (check the seal, extract to a new empty folder, stop on any shared case ID or order number).
@@ -201,7 +201,7 @@ Visible total 67. Hold-out about 29 (at least 2 per kind; it brings every kind t
 1. End to end: a signed WooCommerce order event becomes one HubSpot contact and one linked deal with exact values; updates, resends and late older updates are handled; every failed order is in needs-attention with a Slack alert, and replay works.
 2. Safety: 0 breaks of the five hard rules (H1-H5) in all 3 gated runs.
 3. Every gated case gives its expected result in all 3 runs (code checks 100%), or the FAIL is recorded honestly and fixed in a new version.
-4. Test standard met: 67 visible cases written before the build, about 30% hold-out by a separate session, 3 runs, worst run reported, every run recorded.
+4. Test standard met: 67 visible cases written before the build (76 since gate v4), about 30% hold-out by a separate session, 3 runs, worst run reported, every run recorded.
 5. README in client words with the diagram, the limits, "going live" steps and a cover image; numbers only from RESULTS.md.
 
 ## 7. Decisions
@@ -223,6 +223,7 @@ Open:
 
 ## 8. Version log
 
+- v1.4 2026-10-26: gate version 4 after the P5 gated FAIL (hold-out H-R02, evals/RESULTS.md 2026-10-26) and the R3 blind-spot red team (q129-r3-blindspot-redteam.md in the shared notes). Owner's words in the Q-129 session: "Pixel 9." (voice-to-text; meaning "fix all 9"), answering the request to approve R3 findings 1-9, the H-R02 fix and gate v4. Section 5: 9 new visible cases (U 7, A 8, T 8, R 9; 76 in all), hold-out about 33. Details: evals/eval_config.yaml v4 and tests/CASES.md. No expected value of an existing visible case changed.
 - v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report q129-r1-gate-redteam.md in the planning session's shared notes). Owner decision: "Approved: R1 findings 2, 3, 4, 5 and 11 (test changes), owner, 2026-10-20." (owner's words in the R1 session: "yes, I agrove."; confirmed in the planning session: "I approve the changes in that session"). Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
 - v1.2.1 2026-10-20: shared n8n coordination rule added to the stack line (owner's words, relayed by the planning session: "when one need exclusively for itself the platform, it needs to send messages to others and when it stop, again send the messages that it's free"). No other change.
 - v1.2 2026-10-20: owner approval ("approved."): decisions 1-4 locked; LOCKED; Q-129 registered (kristian-wiki 59405c2).

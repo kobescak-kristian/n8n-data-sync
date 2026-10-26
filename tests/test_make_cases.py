@@ -114,6 +114,13 @@ PLANTS = [
      lambda cs: by_id(cs, "N01").update(gated=False)),
     ("wrong simulated flag", "simulated must be True",
      lambda cs: by_id(cs, "T01").update(simulated=False)),
+    # gate v4 (R3-04)
+    ("parallel group meets an open row of its order", "meets an open needs-attention row",
+     lambda cs: by_id(cs, "R06")["events"][2].update(parallel="g")),
+    ("summary after a parallel group", "no summary after a parallel group",
+     lambda cs: by_id(cs, "D02")["events"].append({"step": 3, "type": "summary", "expect": {
+         "http": 200, "result": [], "reasons": [], "alerts": [], "attention_row": "none",
+         "summary": {k: 0 for k in mc.SUMMARY_KEYS}}})),
 ]
 
 DOC_PLANTS = [
@@ -157,6 +164,12 @@ def main():
     # ... and the same cases moved to hold-out IDs, numbers and domains pass
     msg = stops(as_holdout(BASE), "holdout")
     report(msg is None, "set moved to the hold-out ranges accepted", (msg or "").splitlines()[0] if msg else "")
+
+    # gate v4 (R3-07): the model reads a body like the Code nodes do
+    report(not mc.PING_RE.match("webhook_id=14\n") and bool(mc.PING_RE.match("webhook_id=14")),
+           "ping with a final newline is not a ping")
+    report(mc.parse_body('{"total": NaN}') is None and mc.parse_body('{"total": "1"}') == {"total": "1"},
+           "NaN is not JSON")
 
     # same bytes on two builds
     a, b = mc.serialize(mc.build_visible(), "visible"), mc.serialize(mc.build_visible(), "visible")

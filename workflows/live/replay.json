@@ -92,8 +92,7 @@
    ],
    "parameters": {
     "jsCode": "const q = $('Replay request').first().json;\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst row = rows.find((r) => Number(r.id) === q.row_id) || null;\nlet go = false, reason = null;\nif (!row) reason = 'row_not_found';\nelse if (row.state !== 'open') reason = 'row_closed';\nelse go = true;\nreturn [{ json: { go, reason, row_id: q.row_id, request_id: q.request_id, received_ms: q.received_ms,\n  core: go ? { mode: 'replay', body_text: row.body, request_id: q.request_id, delivery_id: '', topic: '',\n    received_ms: q.received_ms, replay: { row_id: row.id, order: row.order_number || '', replays: Number(row.replays || 0) },\n    user: 'replay', force_crash: false } : null } }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "998afef6-6ba3-51f0-a647-54897e39a4ae",

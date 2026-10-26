@@ -121,8 +121,7 @@
    ],
    "parameters": {
     "jsCode": "const S = Object.assign({}, $('Data hash').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nS.ledger_found = !!led;\nif (!led) { S.action = 'write'; S.result = 'created'; }\nelse if (S.modified < led.version) { S.action = 'skip'; S.result = 'skipped_older'; }\nelse if (S.modified === led.version) {\n  if (led.data_hash !== S.data_hash) { S.action = 'attention'; S.result = 'needs_attention'; S.reasons = ['same_version_different_data']; }\n  else { S.action = 'skip'; S.result = 'skipped_duplicate'; }\n} else { S.action = 'write'; S.result = 'updated'; }\nreturn [{ json: S }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "fd703516-1279-5266-8b2a-4a4cee417a61",
@@ -201,8 +200,7 @@
    ],
    "parameters": {
     "jsCode": "const S = Object.assign({}, $('Decide').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nif (led && led.version > S.modified) { S.action = 'skip'; S.result = 'skipped_older'; }\nreturn [{ json: S }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "2de14c47-38e3-574e-91eb-90c26606f86d",
@@ -363,8 +361,7 @@
    ],
    "parameters": {
     "jsCode": "const S = Object.assign({}, $('After contact').first().json);\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nif (led && led.version > S.modified) { S.action = 'skip'; S.result = 'skipped_older'; }\nreturn [{ json: S }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "86730ce9-3e53-5e11-8985-e439d59a0744",
@@ -607,8 +604,7 @@
    ],
    "parameters": {
     "jsCode": "const S = $('After link').first().json;\nconst rows = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null);\nconst led = rows.length ? rows[0] : null;\nreturn [{ json: { order_number: S.order_number, version: S.modified, data_hash: S.data_hash, updated_at: new Date().toISOString(),\n  write: !(led && led.version > S.modified) } }];\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "90c67707-c5db-5149-8369-515662f9676d",
@@ -770,8 +766,7 @@
    ],
    "parameters": {
     "jsCode": "const S = $('After link').first().json;\nconst open = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null && j.state === 'open');\nconst replayId = S.replay ? String(S.replay.row_id) : null;\nconst out = [];\nconst at = new Date().toISOString();\nfor (const r of open) {\n  const mine = replayId !== null && String(r.id) === replayId;\n  const bySync = S.action === 'write' && r.order_number === S.order_number && (!r.version || r.version <= S.modified);\n  if (mine || bySync) out.push({ json: { row_id: r.id, state: 'closed', closed_by: mine ? 'replay' : 'sync', closed_at: at, closed_request: S.request_id } });\n}\nif (!out.length) out.push({ json: { row_id: -1, state: 'closed', closed_by: '', closed_at: at, closed_request: '' } });\nreturn out;\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "4581701e-8f5c-5597-a94a-dce4369892e7",
@@ -961,8 +956,7 @@
    ],
    "parameters": {
     "jsCode": "const S = $('Skip state').first().json;\nconst open = $input.all().map((i) => i.json).filter((j) => j && j.id !== undefined && j.id !== null && j.state === 'open');\nconst replayId = S.replay ? String(S.replay.row_id) : null;\nconst out = [];\nconst at = new Date().toISOString();\nfor (const r of open) {\n  const mine = replayId !== null && String(r.id) === replayId;\n  const bySync = S.action === 'write' && r.order_number === S.order_number && (!r.version || r.version <= S.modified);\n  if (mine || bySync) out.push({ json: { row_id: r.id, state: 'closed', closed_by: mine ? 'replay' : 'sync', closed_at: at, closed_request: S.request_id } });\n}\nif (!out.length) out.push({ json: { row_id: -1, state: 'closed', closed_by: '', closed_at: at, closed_request: '' } });\nreturn out;\n"
-   },
-   "executeOnce": true
+   }
   },
   {
    "id": "ef808878-272f-5960-92ac-f4f8e6e327ed",
