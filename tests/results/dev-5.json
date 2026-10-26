@@ -1,0 +1,145 @@
+{
+ "label": "dev-5",
+ "started": "2026-10-26T06:47:16.189Z",
+ "finished": "2026-10-26T06:51:30.868Z",
+ "workflow_commit": "a156178",
+ "workflow_hash": "b50f0ef2328e87b9e3a7d105ce5fd00a4a1314940e341858a8935e515319b506",
+ "tree_clean": true,
+ "reset": true,
+ "only": "U07,A07,A08,T07,T08,R06,R07,R08,R09",
+ "visible_sha256": "ea488c9ddc979a2e6970838f4ee7757abcb2eb3b32db3e6ab439d3a4b9272fa0",
+ "holdout_sha256": null,
+ "set": "visible",
+ "sweep_sha256": null,
+ "stray_alerts": 0,
+ "cases_run": 9,
+ "passed": 9,
+ "hard_rule_breaks": 0,
+ "cases": [
+  {
+   "id": "U07",
+   "kind": "U",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 17.1,
+   "step_seconds": {
+    "1": 7.3,
+    "2": 5.4
+   }
+  },
+  {
+   "id": "A07",
+   "kind": "A",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 3.8,
+   "step_seconds": {
+    "1": 3.0
+   }
+  },
+  {
+   "id": "A08",
+   "kind": "A",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 2.6,
+   "step_seconds": {
+    "1": 1.9
+   }
+  },
+  {
+   "id": "T07",
+   "kind": "T",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 22.9,
+   "step_seconds": {
+    "1": 9.0
+   }
+  },
+  {
+   "id": "T08",
+   "kind": "T",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 35.3,
+   "step_seconds": {
+    "1": 21.4
+   }
+  },
+  {
+   "id": "R06",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 42.4,
+   "step_seconds": {
+    "1": 16.2,
+    "2": 15.1,
+    "3": 4.9
+   }
+  },
+  {
+   "id": "R07",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 47.3,
+   "step_seconds": {
+    "1": 17.6,
+    "2": 15.9,
+    "3": 5.8
+   }
+  },
+  {
+   "id": "R08",
+   "kind": "R",
+   "set": "visible",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 48.7,
+   "step_seconds": {
+    "1": 14.9,
+    "2": 14.6,
+    "3": 7.2,
+    "4": 5.1
+   }
+  },
+  {
+   "id": "R09",
+   "kind": "R",
+   "set": "visible",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 13.4,
+   "step_seconds": {
+    "1": 6.7,
+    "2": 1.9
+   }
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 5.3,
+  "worst_seconds_sync": 6.1,
+  "retries": 14,
+  "hubspot_requests_via_proxy": 45
+ },
+ "secret_leaks": 0
+}

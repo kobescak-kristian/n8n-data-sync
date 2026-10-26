@@ -1,0 +1,324 @@
+{
+ "label": "sweep-4",
+ "started": "2026-10-26T08:03:54.481Z",
+ "finished": "2026-10-26T08:14:06.584Z",
+ "workflow_commit": "a156178",
+ "workflow_hash": "b50f0ef2328e87b9e3a7d105ce5fd00a4a1314940e341858a8935e515319b506",
+ "tree_clean": true,
+ "reset": true,
+ "only": null,
+ "visible_sha256": "ea488c9ddc979a2e6970838f4ee7757abcb2eb3b32db3e6ab439d3a4b9272fa0",
+ "holdout_sha256": null,
+ "set": "sweep",
+ "sweep_sha256": "e78351bd5983e40d7c70d294862a6caaabc55d0d49ccbc18ae0d490ea6611c2a",
+ "stray_alerts": 0,
+ "cases_run": 17,
+ "passed": 16,
+ "hard_rule_breaks": 2,
+ "cases": [
+  {
+   "id": "SW01",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 9.8,
+   "step_seconds": {
+    "1": 4.5,
+    "2": 4.7
+   },
+   "outcome": "LIMIT",
+   "limit_misses": [
+    {
+     "where": "final deal 71010 stage",
+     "rule": "H1",
+     "expected": "Closed Won",
+     "actual": "Appointment Scheduled"
+    },
+    {
+     "where": "final deal 71010 modified",
+     "rule": "H1",
+     "expected": "2026-10-17T07:20:00Z",
+     "actual": "2026-10-17T07:00:06Z"
+    }
+   ]
+  },
+  {
+   "id": "SW02",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 10.4,
+   "step_seconds": {
+    "1": 7.7,
+    "2": 7.8
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW03",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 6.1,
+   "step_seconds": {
+    "1": 3.5,
+    "2": 3.6
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW04",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 7.8,
+   "step_seconds": {
+    "1": 3.5,
+    "2": 3.6
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW05",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 65.3,
+   "step_seconds": {
+    "1": 57.4,
+    "2": 3.4
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW06",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 88.1,
+   "step_seconds": {
+    "1": 75.2
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW07",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 62.6,
+   "step_seconds": {
+    "1": 57.5,
+    "2": 2.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW08",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 16.3,
+   "step_seconds": {
+    "1": 13.7
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW09",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 34.8,
+   "step_seconds": {
+    "1": 11.7,
+    "2": 11.7,
+    "3": 3.4,
+    "4": 1.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW11",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 17.8,
+   "step_seconds": {
+    "1": 1.3,
+    "2": 1.3,
+    "3": 3.4,
+    "4": 1.3,
+    "5": 1.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW12",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 77.6,
+   "step_seconds": {
+    "1": 3.4,
+    "2": 11.7,
+    "3": 11.7,
+    "4": 3.4,
+    "5": 1.3,
+    "6": 1.3,
+    "7": 1.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW13",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 126.5,
+   "step_seconds": {
+    "1": 1.3,
+    "2": 1.3,
+    "3": 1.3,
+    "4": 1.3,
+    "5": 1.3,
+    "6": 1.3,
+    "7": 3.4,
+    "8": 3.4,
+    "9": 3.3,
+    "10": 1.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW14",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 8.7,
+   "step_seconds": {
+    "1": 1.3,
+    "2": 3.4
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW18",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 8.7,
+   "step_seconds": {
+    "1": 1.3,
+    "2": 3.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW19",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": false,
+   "misses": [
+    {
+     "where": "final deal HB-71190 count",
+     "rule": "H2",
+     "expected": 1,
+     "actual": 2
+    },
+    {
+     "where": "final deal hb-71190 count",
+     "rule": "H2",
+     "expected": 1,
+     "actual": 2
+    }
+   ],
+   "seconds": 10.2,
+   "step_seconds": {
+    "1": 3.4,
+    "2": 2.3
+   },
+   "outcome": "OBSERVE",
+   "limit_misses": null
+  },
+  {
+   "id": "SW20",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": false,
+   "pass": true,
+   "misses": [],
+   "seconds": 25.6,
+   "step_seconds": {
+    "1": 1.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  },
+  {
+   "id": "SW21",
+   "kind": "SW",
+   "set": "sweep",
+   "simulated": true,
+   "pass": true,
+   "misses": [],
+   "seconds": 18.1,
+   "step_seconds": {
+    "1": 12.7,
+    "2": 2.3
+   },
+   "outcome": "PASS",
+   "limit_misses": null
+  }
+ ],
+ "proxy_real_errors": [],
+ "secondary": {
+  "median_seconds_sync": 2.4,
+  "worst_seconds_sync": 12.6,
+  "retries": 17,
+  "hubspot_requests_via_proxy": 99
+ },
+ "secret_leaks": 0
+}
