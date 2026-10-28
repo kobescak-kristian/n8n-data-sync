@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" width="1600" height="1200" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <!-- Upwork cover, 1600x1200. Every number is from evals/RESULTS.md, second gated series (gate v4), gated-4..6 on the workflows of a156178. PNG: Edge headless screenshot at 1600x1200 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#bg)"/>
+
+  <text x="100" y="170" fill="#93c5fd" font-size="34" font-weight="600" letter-spacing="2">N8N  &#183;  WOOCOMMERCE  &#183;  HUBSPOT  &#183;  SLACK</text>
+  <text x="100" y="270" fill="#f8fafc" font-size="92" font-weight="700">Data Sync with Checks</text>
+  <text x="100" y="345" fill="#cbd5e1" font-size="40">Shop orders into your CRM: no duplicates, no blanks over good data.</text>
+  <text x="100" y="397" fill="#cbd5e1" font-size="40">Orders it cannot sync go to a person, with a Slack alert.</text>
+
+  <!-- flow -->
+  <rect x="100" y="470" width="300" height="120" rx="16" fill="#1e293b" stroke="#475569" stroke-width="3"/>
+  <text x="250" y="522" fill="#f8fafc" font-size="34" font-weight="600" text-anchor="middle">Shop order</text>
+  <text x="250" y="562" fill="#94a3b8" font-size="22" text-anchor="middle">WooCommerce webhook</text>
+  <line x1="410" y1="530" x2="520" y2="530" stroke="#94a3b8" stroke-width="4" marker-end="url(#a)"/>
+  <rect x="530" y="450" width="420" height="160" rx="18" fill="#1d4ed8" stroke="#60a5fa" stroke-width="3"/>
+  <text x="740" y="515" fill="#ffffff" font-size="40" font-weight="700" text-anchor="middle">Data sync</text>
+  <text x="740" y="560" fill="#dbeafe" font-size="25" text-anchor="middle">checks every field first</text>
+  <text x="740" y="593" fill="#dbeafe" font-size="25" text-anchor="middle">one contact, one deal per order</text>
+  <line x1="960" y1="500" x2="1080" y2="480" stroke="#94a3b8" stroke-width="4" marker-end="url(#a)"/>
+  <line x1="960" y1="560" x2="1080" y2="585" stroke="#94a3b8" stroke-width="4" marker-end="url(#a)"/>
+  <rect x="1090" y="430" width="410" height="90" rx="14" fill="#064e3b" stroke="#34d399" stroke-width="3"/>
+  <text x="1295" y="487" fill="#ecfdf5" font-size="32" font-weight="600" text-anchor="middle">HubSpot contact + deal</text>
+  <rect x="1090" y="545" width="410" height="90" rx="14" fill="#7c2d12" stroke="#fb923c" stroke-width="3"/>
+  <text x="1295" y="602" fill="#fff7ed" font-size="30" font-weight="600" text-anchor="middle">needs-attention + alert</text>
+
+  <!-- results -->
+  <text x="100" y="745" fill="#93c5fd" font-size="30" font-weight="600">3 FULL TEST RUNS, 110 MADE-UP ORDER CASES EACH</text>
+  <rect x="100" y="780" width="440" height="220" rx="18" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <text x="140" y="885" fill="#34d399" font-size="84" font-weight="700">110/110</text>
+  <text x="140" y="945" fill="#e2e8f0" font-size="34">cases right</text>
+  <text x="140" y="982" fill="#94a3b8" font-size="24">in each of the 3 runs</text>
+  <rect x="580" y="780" width="440" height="220" rx="18" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <text x="620" y="885" fill="#34d399" font-size="96" font-weight="700">0</text>
+  <text x="620" y="945" fill="#e2e8f0" font-size="30">duplicates or wrong values</text>
+  <text x="620" y="982" fill="#94a3b8" font-size="24">0 breaks of the 5 hard rules</text>
+  <rect x="1060" y="780" width="440" height="220" rx="18" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <text x="1100" y="885" fill="#34d399" font-size="96" font-weight="700">2.4 s</text>
+  <text x="1100" y="945" fill="#e2e8f0" font-size="32">median per synced order</text>
+  <text x="1100" y="982" fill="#94a3b8" font-size="24">slowest run's median &#183; no AI cost</text>
+
+  <text x="100" y="1070" fill="#94a3b8" font-size="29">Portfolio demo, no client data was used &#8211; invented shop, customers and orders.</text>
+  <text x="100" y="1115" fill="#94a3b8" font-size="29">34 of the 110 test cases were kept sealed and unseen until the final runs.</text>
+</svg>
