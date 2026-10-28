@@ -1,6 +1,6 @@
 # ADR-002: Every deal upsert sends `closedate`, so HubSpot never sets it to "now" on a stage move
 
-**Status:** Proposed (2026-10-20, P2 probe). Becomes Accepted when the P3 build sends `closedate` in every deal upsert and the first full visible run reads U02's `closedate` back as sent.
+**Status:** Accepted (2026-10-28). Proposed 2026-10-20 (P2 probe) with the condition: the P3 build sends `closedate` in every deal upsert and the first full visible run reads U02's `closedate` back as sent. Verified 2026-10-28: the one place that builds the deal properties (`workflows/sync_js.py`, in `workflows/live/core.json`) always sets `closedate: d.order_date`; U02 passed in `tests/results/vis-10.json` to `vis-12.json` and `gated-4.json` to `gated-6.json`. Owner's words 2026-10-28, answering "mark the 3 ADRs Accepted": "Yes to both".
 Date: 2026-10-20
 Author: Kristian Kobescak (owner); drafted by a Claude Code build session (P2)
 

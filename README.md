@@ -88,14 +88,14 @@ How the test works: [`tests/runner.py`](tests/runner.py) signs and sends each ev
 The live export carries placeholders instead of credential and workflow IDs, so going live is an install step, done once with the client:
 
 1. **Host.** Use n8n Cloud or a managed n8n host with HTTPS (the demo n8n is local and not reachable from the internet).
-2. **HubSpot.** Create a service key on the client's HubSpot with contact and deal read/write. Create the deal properties `shop_order_id` (unique), `shop_modified_at` (date-time) and `shop_currency`, and the contact property `sync_source`.
+2. **HubSpot.** Create a service key on the client's HubSpot with contact and deal read/write. Create the deal properties `shop_order_id` (unique), `shop_modified_at` (date-time) and `shop_currency`, and the contact property `sync_source`. On a paid HubSpot with several currencies set up, HubSpot's own `deal_currency_code` is the better field for the currency ([ADR-001](adr/001-currency-in-shop-currency.md)).
 3. **Slack.** A Slack app with `chat:write`, invited to `#data-sync-alerts`.
 4. **Webhook secret.** Generate one long random secret. Put it in the n8n Crypto credential `Crypto WooCommerce n8n-data-sync` and in **both** WooCommerce webhooks (`order.created` and `order.updated`), delivery URL `https://<your-n8n>/webhook/q129-order`.
 5. **Replay login.** A Basic Auth credential for the replay form.
 6. **Shop settings.** In [`workflows/sync_js.py`](workflows/sync_js.py) set the allowed currencies (`CURRENCIES`), the shop-status-to-deal-stage map (`STAGE`, `STAGE_IDS`), the deal pipeline (`pipeline: 'default'`) and the `sync_source` value, then run `python workflows/build.py` to rebuild the files in `workflows/live/`.
 7. **Data tables.** Create the 4 tables `q129_ledger`, `q129_attention`, `q129_log` and `q129_alerts`, with the columns listed in `TABLES` in [`workflows/build.py`](workflows/build.py).
 8. **Import.** Import the files in `workflows/live/` in this order: `error`, `hubspot-call`, `core`, `entry`, `replay`, `summary`. In each workflow select the credentials and the sub-workflows it calls; in Entry, Replay and Summary select `Q129 Error` as the error workflow. Then publish.
-9. **Settings.** Set n8n's time zone to the client's (the summary runs at 08:00 n8n time). An alert for "no order in X hours" is not built; add it at go-live if the shop wants it.
+9. **Settings.** Set n8n's time zone to the client's (the summary runs at 08:00 n8n time). An alert for "no order in X hours" is not built; add it at go-live if the shop wants it. After any n8n upgrade, run `python tools/probe.py --only n8n` again: the order webhook depends on version 1 of n8n's Webhook node ([ADR-003](adr/003-order-webhook-v1-binary-body.md)).
 10. **Check before real data.** Before importing the live export, run the test copy and the test set on the client's host with a test HubSpot account. Then send one test order from the shop. Force one failure in an automatic run (for example, a temporary Stop and Error node at the start of Core, then one test order) and see the crash alert arrive in `#data-sync-alerts`; remove the node. After any change of the secret, send one test order again.
 11. **Rollback.** Deactivate the workflows, import the previous version from git, and replay the needs-attention rows.
 

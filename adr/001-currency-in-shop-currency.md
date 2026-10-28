@@ -1,6 +1,6 @@
 # ADR-001: The order currency goes into the custom deal property `shop_currency`, not `deal_currency_code`
 
-**Status:** Proposed (2026-10-20, P2 probe). Becomes Accepted when the P3 build writes `shop_currency` and the first full visible run reads EUR, GBP and USD back exactly.
+**Status:** Accepted (2026-10-28). Proposed 2026-10-20 (P2 probe) with the condition: the P3 build writes `shop_currency` and the first full visible run reads EUR, GBP and USD back exactly. Verified 2026-10-28: `workflows/live/core.json` writes `shop_currency` and no workflow sends `deal_currency_code`; N04 (GBP), N05 and M04 (USD) and the EUR cases passed in `tests/results/vis-10.json` to `vis-12.json` and `gated-4.json` to `gated-6.json`. Owner's words 2026-10-28, answering "mark the 3 ADRs Accepted": "Yes to both".
 Date: 2026-10-20
 Author: Kristian Kobescak (owner); drafted by a Claude Code build session (P2)
 
