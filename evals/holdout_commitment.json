@@ -1,8 +1,8 @@
 {
-  "about": "Commitment to the Q-129 hold-out test set v4 (n8n data sync with checks, Upwork item 4), written for the second gated series after the first hold-out was spent (P5 FAIL on H-R02, 2026-10-26). The cases were written by a separate session that never builds the workflow and never opened tests/cases/, tests/make_cases.py source, tests/make_sweep.py, workflows/, tests/results/, evals/RESULTS.md, the shared notes or any older hold-out, from tests/CASES.md, evals/eval_config.yaml and BLUEPRINT.md section 5 at gate commit 39b5c7d (gate v4) only, and sealed before the second gated series. This file holds only counts and hashes, no case content.",
+  "about": "Commitment to the hold-out test set v4 (n8n data sync with checks), written for the second gated series after the first hold-out was spent (P5 FAIL on H-R02, 2026-10-26). The cases were written by a separate AI writer that never builds the workflow and never opened tests/cases/, tests/make_cases.py source, tests/make_sweep.py, workflows/, tests/results/, evals/RESULTS.md, the build notes or any older hold-out, from tests/CASES.md, evals/eval_config.yaml and BLUEPRINT.md section 5 at gate commit 39b5c7d (gate v4) only, and sealed before the second gated series. This file holds only counts and hashes, no case content.",
   "date": "2026-10-26",
   "gate_version": 4,
-  "written_by": "separate Claude Code session (Opus 5.5), hold-out writer only; owner Kristian Kobescak",
+  "written_by": "separate Claude Code writer (Opus 5.5), hold-out writer only; project of Kristian Kobescak",
   "gate_commit": "39b5c7d",
   "case_count": 34,
   "gated_count": 34,
@@ -56,6 +56,6 @@
   "archive_file": "holdout.zip",
   "archive_contents": "README.txt, holdout.json, write_holdout.py",
   "archive_sha256": "c294796d7e047814e44bf4418dcc39e6d406ed274ea29f690467dbe9340870f5",
-  "kept_at": "folder q129-holdout-v4 in the owner's user profile, outside every repository",
-  "how_to_open": "At the gated runs only: check that the SHA-256 of holdout.zip equals archive_sha256; if it does not, the hold-out result is void. Extract into a new, empty folder, check that holdout.json has holdout_json_sha256, stop on any case ID or order number shared with tests/cases/visible.json, run python tests/make_cases.py --check <extracted holdout.json> --set holdout (any refused case is an owner decision, recorded in evals/RESULTS.md), then follow README.txt inside."
+  "kept_at": "folder q129-holdout-v4 in Kristian's user profile, outside every repository",
+  "how_to_open": "At the gated runs only: check that the SHA-256 of holdout.zip equals archive_sha256; if it does not, the hold-out result is void. Extract into a new, empty folder, check that holdout.json has holdout_json_sha256, stop on any case ID or order number shared with tests/cases/visible.json, run python tests/make_cases.py --check <extracted holdout.json> --set holdout (any refused case is Kristian's decision, recorded in evals/RESULTS.md), then follow README.txt inside."
 }

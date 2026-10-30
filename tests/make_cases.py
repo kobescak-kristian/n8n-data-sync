@@ -1,4 +1,4 @@
-"""Visible test cases for n8n-data-sync (Q-129), BLUEPRINT.md v1.2 section 5.
+"""Visible test cases for n8n-data-sync, BLUEPRINT.md v1.2 section 5.
 
 Rules: tests/CASES.md. This file holds the 76 visible cases (gate v4) and a small
 reference model of the CASES.md rules. The model fills in the expected

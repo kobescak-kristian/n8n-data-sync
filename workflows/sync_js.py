@@ -419,7 +419,7 @@ return [{ json: out }];
 """.replace("__N__", str(n))
 
 
-# After each retry wait, before the retry write (owner decision 2026-10-22, sweep SW02): read the ledger again.
+# After each retry wait, before the retry write (Kristian's decision 2026-10-22, sweep SW02): read the ledger again.
 # If a newer version landed during the wait, write nothing more; Core ends the event skipped_older.
 def recheck_wait(n):
     return r"""

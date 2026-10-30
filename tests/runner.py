@@ -1,4 +1,4 @@
-"""Test runner of the data sync (Q-129): sends every case to the Q129 workflows and grades it.
+"""Test runner of the data sync: sends every case to the Q129 workflows and grades it.
 
     python tests/runner.py --label visible-1                 # all visible cases (resets first)
     python tests/runner.py --label dry-1 --only N01,T01      # some cases (resets first)
@@ -60,7 +60,7 @@ ENV = load_env()
 
 
 class Invalid(Exception):
-    """The test machinery failed (INVALID RUN, eval-gate section 6)."""
+    """The test machinery failed (INVALID RUN)."""
 
 
 def iso_now():

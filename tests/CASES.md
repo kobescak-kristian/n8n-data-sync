@@ -1,7 +1,7 @@
 # Test cases: the rules they encode and the case format
 
 Written before the build (eval gate: `evals/eval_config.yaml`). The
-workflow is built to these rules, never the reverse. A separate session
+workflow is built to these rules, never the reverse. A separate AI writer
 writes the hold-out cases from this file alone (section 8).
 
 Plan: `BLUEPRINT.md` v1.4 (locked 2026-10-20; v1.3 records the R1
@@ -547,8 +547,7 @@ every response in that step's fault lists: 17 s per `timeout` or
 is `crash`, the runner waits for the recorded `crash` alert instead of
 the log row (same longest wait, matched by time after the step was
 sent); a log row is allowed but not required. A step that exceeds its
-wait is a miss (H4), unless the test machinery failed (INVALID RUN,
-eval-gate §6).
+wait is a miss (H4), unless the test machinery failed (INVALID RUN).
 
 **Reading HubSpot.** Field values and the before/after reads for
 `hubspot_unchanged` use GET by `idProperty` (`email` for contacts,
@@ -650,7 +649,7 @@ missing here with its title. Expected results per step, in order.
 | S04 | Forced crash in an automatic run alerts | crash |
 | S05 | Summary with no events in the window still posts, all zero | summary |
 
-## 8. Writing the hold-out cases (separate session)
+## 8. Writing the hold-out cases (separate AI writer)
 
 The hold-out writer never builds, never opens `tests/cases/visible.json`
 or `tests/make_cases.py` (it may run the checker), and works from this
@@ -676,17 +675,17 @@ file only.
    (writes nothing; exit 0 = the set is consistent with these rules).
    If the checker disagrees, decide from this file. If this file and
    the checker disagree, do not change either: record the case as a
-   finding for the owner.
+   finding for Kristian.
 6. Seal as in item 3: zip the file (with a README.txt) outside every
    repository, write `evals/holdout_commitment.json` (date, case count,
    count per kind, count per result, archive SHA-256, where it is kept,
    how to open). Only that file is committed here.
-7. Opening (gate v2, owner 2026-10-20): at the first gated run, after
+7. Opening (gate v2, Kristian 2026-10-20): at the first gated run, after
    the seal check and before any scoring, run the current checker on
    the extracted file: `python tests/make_cases.py --check <file> --set
    holdout`. Any case the current checker refuses (for example a hold-out
-   sealed under an older gate version) is a wrong case for an owner
-   decision (eval-gate §7), never a silent fix, and the refusal is
+   sealed under an older gate version) is a wrong case for Kristian
+   to decide, never a silent fix, and the refusal is
    recorded in `evals/RESULTS.md`.
 
 ## 9. Not tested here

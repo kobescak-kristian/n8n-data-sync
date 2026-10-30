@@ -1,19 +1,23 @@
-# Eval gate: n8n data sync with checks (Q-129, Upwork portfolio item 4)
-# Committed before any workflow code (eval-gate hard rule 1). The workflow is
-# built against this gate, never the reverse. Frozen once committed (eval-gate
-# section 7): cases and expected results, grading, level, runs. A change applies
+# Eval gate: n8n data sync with checks (portfolio demo)
+# Committed before any workflow code. The workflow is
+# built against this gate, never the reverse. Frozen once committed:
+# cases and expected results, grading, level, runs. A change applies
 # only to the next version, by a new dated version of this file and a note in
 # evals/RESULTS.md; the old version stays in git history.
+# Text edit 2026-10-30 (Kristian's instruction, for publication): internal
+# reference labels and the word "owner" were removed from comments and
+# text values; no case, expected result, grading, level or run changed,
+# so the gate version stays 4. The original text is in git history.
 version: 4
 date: 2026-10-26
 plan: "BLUEPRINT.md v1.4 (LOCKED 2026-10-20; v1.3 records the R1 changes, v1.4 gate v4), section 5"
 changes:
   - version: 4
     date: 2026-10-26
-    decision: "owner, 2026-10-26, in the Q-129 session: 'Pixel 9.' (voice-to-text; read as 'fix all 9'), answering: approve R3 findings 1-9, the H-R02 fix and gate v4"
+    decision: "Kristian, 2026-10-26: 'Pixel 9.' (voice-to-text; read as 'fix all 9'), answering: approve R3 findings 1-9, the H-R02 fix and gate v4"
     after_gated_fail: "P5 gated series FAIL on hold-out H-R02 (evals/RESULTS.md 2026-10-26); the old hold-out is spent, a new one is written after this version is committed"
     what: >-
-      R3 blind-spot red team (shared notes q129-r3-blindspot-redteam.md). 9 new visible cases (76 in all):
+      R3 blind-spot red team (report kept outside this repository). 9 new visible cases (76 in all):
       R06, R07, R08 (two open rows for one order in 3 shapes; R3 finding 1), R09 (row_not_found), T07, T08
       (close, 403, simulated 404, contacts timeout_after_forward; finding 5), A07, A08 (empty body; finding 3),
       U07 (e-mail changed in an update; finding 6). Generator: no summary after a parallel group and no
@@ -25,7 +29,7 @@ changes:
       $input.all() (H-R02, finding 2), empty-body signing in Entry (finding 3), tests/check_execute_once.py.
   - version: 3
     date: 2026-10-25
-    decision: "owner, 2026-10-25, in the Q-129 session: 'approved' (answer to: gate rule 3.7 change, one retry on HubSpot OBJECT_NOT_FOUND for contact writes)"
+    decision: "Kristian, 2026-10-25: 'approved' (answer to: gate rule 3.7 change, one retry on HubSpot OBJECT_NOT_FOUND for contact writes)"
     before_any_gated_run: true
     what: >-
       tests/CASES.md 3.7: HubSpot's 404 with category OBJECT_NOT_FOUND on a contact upsert is retried once after
@@ -35,10 +39,10 @@ changes:
       hold-out is unchanged. Build: workflows/sync_js.py check_try (8973aff).
   - version: 2
     date: 2026-10-20
-    decision: "Approved: R1 findings 2, 3, 4, 5 and 11 (test changes), owner, 2026-10-20."
+    decision: "Kristian approved R1 findings 2, 3, 4, 5 and 11 (test changes) on 2026-10-20."
     before_any_run: true
     what: >-
-      R1 red-team test changes (report q129-r1-gate-redteam.md in the shared notes): 2 longest wait per step
+      R1 red-team test changes (report kept outside this repository): 2 longest wait per step
       grows with the step's faults; 3 a crash step waits for the crash alert, a log row is not required (H4);
       4 parallel groups must have the same body, no faults, no force_crash (generator stops otherwise);
       5 HubSpot reads by idProperty, H2 counts by search after the record shows there, deals also counted by
@@ -49,11 +53,11 @@ changes:
     date: 2026-10-20
     commit: 849b93e
 rules: tests/CASES.md
-procedure: "eval-gate skill; kristian-os EVAL_STANDARD.md"
+procedure: "the author's private test procedure; not part of this repository; the rules that apply are written out in this file and in tests/CASES.md"
 
 eval_level:
   proposed: "Critical (writes customer and order records into the CRM with no person checking each write; deal amounts feed sales reports)"
-  decided: "Standard, owner, 2026-10-20 (CRM records keep a history and can be undone; shop and accounting stay the money truth)"
+  decided: "Standard, Kristian, 2026-10-20 (CRM records keep a history and can be undone; shop and accounting stay the money truth)"
   client_note: "If a client's HubSpot amounts feed invoicing or accounting, the level for that client is Critical (README limit)."
 
 # --- Gate ---
@@ -65,8 +69,8 @@ gate: >-
   Any miss in any run = FAIL.
 
 no_rate_claim: >-
-  There is no AI step, so every check is a code check: a miss is a bug and the
-  eval-gate section 3 rate table does not apply. No % claim anywhere.
+  There is no AI step, so every check is a code check: a miss is a bug and a
+  pass-rate table does not apply. No % claim anywhere.
 
 thresholds:
   gated_cases_pass_per_run: "all (every gated case, every run)"
@@ -128,7 +132,7 @@ secondary_reported_not_gated:
 dataset:
   provenance: >-
     Synthetic. Made-up shop Harbour E-Bikes, made-up customers and orders; e-mails only on subdomains of
-    harbour-sync.example.com (visible) and harbour-sync-h.example.com (hold-out). No real business data (F-112).
+    harbour-sync.example.com (visible) and harbour-sync-h.example.com (hold-out). No real business data.
     Payloads in the WooCommerce REST API v3 order shape, checked on 2026-10-20 against
     https://woocommerce.github.io/woocommerce-rest-api-docs/#orders (source commit 9315664) and
     class-wc-webhook.php (signature, ping, body encoding); see tests/CASES.md section 1.
@@ -149,7 +153,7 @@ dataset:
       checks that it stops.
   hold_out_set:
     share: "about 30% of all cases (about 33 with 76 visible since gate v4; at least 2 per kind)"
-    author: "a separate session that never builds and never opens the visible cases; from tests/CASES.md only"
+    author: "a separate AI writer that never builds and never opens the visible cases; from tests/CASES.md only"
     order_numbers: "61001-69999"
     check: "python tests/make_cases.py --check <file> --set holdout, before sealing"
     commitment: "evals/holdout_commitment.json (case count, count per kind and per result, archive SHA-256), committed before the workflow build"
@@ -157,7 +161,7 @@ dataset:
     opening_v2_check: >-
       The hold-out was sealed under gate version 1. At the first gated run, after the seal check and before
       any scoring, run `python tests/make_cases.py --check <extracted file> --set holdout` (version 2 checker).
-      Any case it refuses is a wrong case for an owner decision (eval-gate section 7), recorded in
+      Any case it refuses is a wrong case for Kristian to decide, recorded in
       evals/RESULTS.md, never a silent fix.
 
 # --- Runs ---
@@ -165,11 +169,11 @@ runs:
   count: 3
   scope: "visible + hold-out, one frozen workflow commit, reset (archive this build's HubSpot records, empty q129_* tables) before each run"
   order: "cases one at a time in file order; events in step order; parallel groups sent at the same moment"
-  why_3: "the owner's test standard asks 3 runs; real HubSpot timing can differ between runs (BLUEPRINT section 5)"
+  why_3: "Kristian's test standard asks for 3 runs; real HubSpot timing can differ between runs (BLUEPRINT section 5)"
   dry_run: "2 cases through the full path before the first full run; runner exit 0; not a result"
   build_checks: "interaction sweep, generator self-check and evals/PREFLIGHT.md before the first gated run; red teams R1 (this gate, before P3) and R2 (the build, before the first gated run)"
-  shared_n8n: "exclusive use announced in n8n-usage.md and by message to the other build sessions (BLUEPRINT section 3)"
-  recording: "every run appended to evals/RESULTS.md, pass or fail, never edited (eval-gate rules 2-4)"
+  shared_n8n: "exclusive use booked and announced to the other builds that share this n8n (BLUEPRINT section 3)"
+  recording: "every run appended to evals/RESULTS.md, pass or fail, never edited (except the 2026-10-30 text edit noted at the top of that file)"
   done: "results artifact committed AND runner exit code 0"
 
 # --- Claims ---

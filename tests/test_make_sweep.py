@@ -1,4 +1,4 @@
-"""Planted-mistake test for the whole-set check in make_sweep.py (eval-gate build checks (b)).
+"""Planted-mistake test for the whole-set check in make_sweep.py (build check b).
 
 Plants one mistake at a time in a copy of the sweep cases; the check must stop on every one with the
 right message, and must accept the unchanged set. Also: two builds give the same bytes, and the

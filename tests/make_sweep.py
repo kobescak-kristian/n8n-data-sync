@@ -1,8 +1,8 @@
-"""Interaction-sweep cases for n8n-data-sync (Q-129), P4 (eval-gate build checks (a)).
+"""Interaction-sweep cases for n8n-data-sync, P4 (build check a).
 
-A development set from the R2 red team of the build (shared notes q129-r2-build-redteam.md, SW01-SW22):
-interactions the frozen gate does not send. Not gated (the R2 report: "not gated unless the owner
-decides"): gate v2, tests/cases/visible.json and its SHA-256 stay as they are. This file only imports the
+A development set from the R2 red team of the build (report kept outside this repository, SW01-SW22):
+interactions the frozen gate does not send. Not gated (the R2 report: not gated unless Kristian
+decides): gate v2, tests/cases/visible.json and its SHA-256 stay as they are. This file only imports the
 payload helpers and the reference model of tests/make_cases.py; it never changes them.
 
 What the sweep adds to the visible case format:
@@ -13,7 +13,7 @@ What the sweep adds to the visible case format:
 - sign mode `empty`: the signature header is sent with an empty value (expected: bad_signature);
 - fault target `link`: the deal-contact link call (the proxy keeps its count out of `seen`, so
   `crm_write_attempts` still counts contact and deal upserts only);
-- `limit_final`: the end state the README limit allows (R2 finding 1, owner 2026-10-21: two versions of one
+- `limit_final`: the end state the README limit allows (R2 finding 1, Kristian 2026-10-21: two versions of one
   order within about 2 seconds, the older one can show in HubSpot until the next update). The runner
   reports LIMIT when only that end state matches.
 

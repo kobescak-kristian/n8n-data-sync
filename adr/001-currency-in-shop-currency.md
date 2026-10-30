@@ -1,8 +1,9 @@
 # ADR-001: The order currency goes into the custom deal property `shop_currency`, not `deal_currency_code`
 
-**Status:** Accepted (2026-10-28). Proposed 2026-10-20 (P2 probe) with the condition: the P3 build writes `shop_currency` and the first full visible run reads EUR, GBP and USD back exactly. Verified 2026-10-28: `workflows/live/core.json` writes `shop_currency` and no workflow sends `deal_currency_code`; N04 (GBP), N05 and M04 (USD) and the EUR cases passed in `tests/results/vis-10.json` to `vis-12.json` and `gated-4.json` to `gated-6.json`. Owner's words 2026-10-28, answering "Mark the 3 ADRs Accepted and add the 2 register entries?" (the second part is the kristian-os failure register): "Yes to both".
+**Status:** Accepted (2026-10-28). Proposed 2026-10-20 (P2 probe) with the condition: the P3 build writes `shop_currency` and the first full visible run reads EUR, GBP and USD back exactly. Verified 2026-10-28: `workflows/live/core.json` writes `shop_currency` and no workflow sends `deal_currency_code`; N04 (GBP), N05 and M04 (USD) and the EUR cases passed in `tests/results/vis-10.json` to `vis-12.json` and `gated-4.json` to `gated-6.json`. Kristian's words 2026-10-28, answering "Mark the 3 ADRs Accepted and add the 2 register entries?" (the second part was about a private failure log, not this repository): "Yes to both".
 Date: 2026-10-20
-Author: Kristian Kobescak (owner); drafted by a Claude Code build session (P2)
+Author: Kristian Kobescak; drafted with Claude Code (P2)
+Text edit 2026-10-30 (Kristian's instruction, for publication): internal reference labels and the word "owner" were removed from the text; no decision, rule, number or result changed. The original text is in git history.
 
 ## Context
 
@@ -39,7 +40,7 @@ The logical field `currency` is written to the custom text deal property
   N04 (GBP) and every EUR case, which is most of the set.
 - **Add EUR and GBP as currencies in the account.** Rejected: more than one
   currency needs a paid HubSpot tier; the build budget is $0 (BLUEPRINT
-  section 0) and the demo account is shared with Q-116.
+  section 0) and the demo account is shared with another demo build.
 - **Convert amounts to the account currency.** Rejected: guessing an exchange
   rate changes money values; CASES.md 3.3 forbids any change of totals.
 - **Send both (`deal_currency_code` only when it is USD).** Rejected: two

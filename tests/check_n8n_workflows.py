@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Keyless check of n8n workflow JSON files.
 
-Named by the blueprint template's "Entry points" line (row R5 of
-kristian-wiki research/automation-build-practices-2026-10-19.md); it
-checks rows S4 (webhook auth), R6 (error workflow) and S1 (no credential
-value in the JSON).
-Canonical copy: kristian-os reference/check_n8n_workflows.py (Q-126).
+Named by the "Entry points" line of the build's blueprint template; it
+checks webhook auth, the error workflow and that no credential value is
+in the JSON.
+A shared checker; only this docstring differs from the shared copy.
 
 Copy it into the build repository as tests/check_n8n_workflows.py and run
 it before every frozen commit:

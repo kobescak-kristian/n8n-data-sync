@@ -1,24 +1,24 @@
-# BLUEPRINT — n8n data sync with checks (Upwork item 4)
+# BLUEPRINT — n8n data sync with checks
 
 ## 0. Header
 
 - Version: v1.3, 2026-10-20
-- Status: LOCKED 2026-10-20 by Kristian Kobescak (owner: "approved.", after v1.1)
-- Owner: Kristian Kobescak
+- Status: LOCKED 2026-10-20 by Kristian Kobescak ("approved.", after v1.1)
+- Author: Kristian Kobescak
 - Build type: portfolio
-- Built by: Claude Code sessions, one phase per session; hold-out cases by a separate session that never builds; red teams by fresh sessions that never build.
-- Trigger: UPWORK_LAUNCH_PLAN.md item 4 ("Data sync with checks", the old Make P2 idea reshaped: no duplicates, no missing fields, alerts; owner 2026-10-18; build order 7, 6, 4).
-- Backlog: Q-129 (kristian-wiki 59405c2). All n8n names below use Q129.
-- Repo: `n8n-data-sync` (owner, 2026-10-20), private until the publish gate (publish is the owner's decision).
-- Timebox and budget: about 8-10 hours in 2 build sessions, plus 1 hold-out session and the red-team sessions. No fixed date: done when the quality bar (section 6, "Done") holds. Money: $0 (no AI step; HubSpot free, Slack free).
+- Built by: Kristian with Claude Code, one phase at a time; hold-out cases by a separate AI writer that never builds; red teams by separate AI reviewers that never build.
+- Trigger: Kristian's portfolio plan ("Data sync with checks": no duplicates, no missing fields, alerts; 2026-10-18).
+- All n8n names below use the prefix Q129.
+- Repo: `n8n-data-sync` (Kristian, 2026-10-20), private until the publish gate (publishing is Kristian's decision).
+- Timebox and budget: about 8-10 hours of build work in 2 parts, plus the hold-out writing and the red teams. No fixed date: done when the quality bar (section 6, "Done") holds. Money: $0 (no AI step; HubSpot free, Slack free).
 
 ## 1. Problem
 
-A small online shop sells through WooCommerce and keeps customers in a CRM (HubSpot). Orders are copied by hand, or by an automation that breaks quietly: the same customer appears twice, an order is missing its total or e-mail, an update overwrites good data, and when a sync fails nobody knows until a report or a customer is wrong. Client words from the research: "receive complete and accurate customer + order data" (B-009, WooCommerce to Customer.io); "check for missing information, prevent duplicate contacts" (U-024); "It should run automatically and reliably, with error handling and alerts." (U-011); "What do you normally do to prevent duplicate records or failed automations?" (P-18). Data family = 24 of 128 posts (19%); duplicate prevention named in 10 posts (career research 2026-10-18_upwork-n8n-demand-extended.md, F-06, F-08, F-19, F-27).
+A small online shop sells through WooCommerce and keeps customers in a CRM (HubSpot). Orders are copied by hand, or by an automation that breaks quietly: the same customer appears twice, an order is missing its total or e-mail, an update overwrites good data, and when a sync fails nobody knows until a report or a customer is wrong. Client words from job posts: "receive complete and accurate customer + order data" (WooCommerce to Customer.io); "check for missing information, prevent duplicate contacts"; "It should run automatically and reliably, with error handling and alerts."; "What do you normally do to prevent duplicate records or failed automations?". Data family = 24 of 128 posts (19%); duplicate prevention named in 10 posts (market research, 2026-10-18).
 
 ## 2. Scope
 
-The demo shop is made up: **Harbour E-Bikes** (the same made-up company as item 6, so the portfolio tells one story). All names, e-mails (example.com domains), phones, addresses and orders are invented (F-112: no real business data).
+The demo shop is made up: **Harbour E-Bikes** (the same made-up company as in another demo build, so the portfolio tells one story). All names, e-mails (example.com domains), phones, addresses and orders are invented (no real business data).
 
 What v1 does:
 - **Takes shop orders in.** One webhook that receives WooCommerce order events (`order.created`, `order.updated`) in WooCommerce's real JSON format. It checks the WooCommerce signature; a request without a valid signature is rejected and nothing is written.
@@ -67,12 +67,12 @@ Test tools: Python runner (signs and sends payloads, reads HubSpot and the table
 ```
 
 **Stack proposal:**
-- **n8n:** local 2.43.7, shared with other builds. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130. Never restart, upgrade or reconfigure n8n; never touch other builds' workflows or credentials. Building in parallel is always fine. Before exclusive use (a full or gated test series, or anything that affects n8n as a whole): read `n8n-usage.md` in the shared notes; if another build has an open line (not DONE), wait for its "free" message; if not, add the line "IN USE Q-129 from HH:MM, expected end HH:MM, <what>" and send a one-line message to the other build sessions. When finished: mark the line DONE and send a one-line "n8n free" message. Messages only at start and end of exclusive use (owner rule, 2026-10-20). Session IDs of the other builds: in that shared notes folder or from the planning session.
-- **HubSpot:** the existing free demo account "Portfolio Demo" (made for Q-116, separate from the owner's real HubSpot; owner, 2026-10-20). This build adds 2 custom deal properties (`shop_order_id`, unique; `shop_modified_at`) and 1 contact property (`sync_source`), plus a text deal property `shop_currency` if P2 finds that the free account has one currency (R1 finding 1; ADR). Its test records use only its own e-mail domains, and the reset touches only records with `sync_source = harbour-demo-shop`, so Q-116's contacts are never touched.
+- **n8n:** local 2.43.7, shared with other builds. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130. Never restart, upgrade or reconfigure n8n; never touch other builds' workflows or credentials. Building in parallel is always fine. Before exclusive use (a full or gated test series, or anything that affects n8n as a whole): check the shared booking list; if another build has an open booking, wait for its "free" message; if not, book n8n (start, expected end, what) and send a one-line message to the other builds. When finished: close the booking and send a one-line "n8n free" message. Messages only at start and end of exclusive use (Kristian's rule, 2026-10-20).
+- **HubSpot:** the existing free demo account "Portfolio Demo" (made for another demo build, separate from Kristian's real HubSpot; Kristian, 2026-10-20). This build adds 2 custom deal properties (`shop_order_id`, unique; `shop_modified_at`) and 1 contact property (`sync_source`), plus a text deal property `shop_currency` if P2 finds that the free account has one currency (R1 finding 1; ADR). Its test records use only its own e-mail domains, and the reset touches only records with `sync_source = harbour-demo-shop`, so the other build's contacts are never touched.
 - **Slack:** the existing demo workspace; new channel `#data-sync-alerts`.
 - **No AI provider, no Google, no new paid service.**
 
-**New things the owner creates (no Q or item numbers in names, owner standard 2026-10-19):**
+**New things Kristian creates (no internal numbers in names, Kristian's standard 2026-10-19):**
 
 | What | Name | Where | Notes |
 |---|---|---|---|
@@ -80,13 +80,13 @@ Test tools: Python runner (signs and sends payloads, reads HubSpot and the table
 | n8n credential for it | `HubSpot n8n-data-sync` | local n8n | |
 | Slack app | `n8n-data-sync` | demo workspace | chat:write; bot invited to `#data-sync-alerts` |
 | n8n credential for it | `Slack n8n-data-sync` | local n8n | |
-| Webhook secret | `WooCommerce n8n-data-sync` | n8n credential + `.env` (runner signs with it) | a long random string the owner generates |
+| Webhook secret | `WooCommerce n8n-data-sync` | n8n credential + `.env` (runner signs with it) | a long random string Kristian generates |
 | Replay form login | `Replay n8n-data-sync` | n8n Basic Auth credential + LastPass | protects the replay form |
 | n8n API key | `n8n-data-sync` | local n8n | lets the build load workflows without a restart |
 
 Values only in n8n, `.env` (git-ignored) and LastPass. No new account with any service.
 
-Non-negotiables (build sessions may not change these):
+Non-negotiables (the build may not change these):
 - Nothing is written to HubSpot before all field checks pass.
 - Every write is an upsert by its key (e-mail, order number); never a plain "create".
 - An empty value never replaces a stored value; an older order version never replaces a newer one.
@@ -113,7 +113,7 @@ Reliability and security defaults:
 | Retries (R7, L4) | which errors, how many, wait; writes only with a key; no double retry | HubSpot 429: wait the time HubSpot gives, at most 10 s; 5xx, timeout, closed connection: 2 retries after 2 s and 8 s; 400/401/403/404: no retry. Node retry off; one own loop. All writes are upserts |
 | Failure path (R6, R9, R12) | error workflow; every handled error alerts; one needs-attention place with replay | `Q129 Error` error workflow; table `q129_attention` + Slack alert per row; `Q129 Replay` form |
 | Silent-failure check (R12) | alert on no success in X hours or more than N errors a day | daily summary always posts (a missing summary is itself visible); alert when more than 5 orders fail in one day. "No order in X hours" is N/A for the demo (no real order flow); the README tells a client to set X for their shop |
-| Credentials (S2, S3, S10; F-112) | owner, scopes, expiry, store, demo accounts; revoke replaced ones | table above; demo accounts only; HubSpot service key has no expiry, so it is revoked by the owner when the build closes or goes public, and any replaced key is revoked at source in the same step |
+| Credentials (S2, S3, S10) | who owns each key, scopes, expiry, store, demo accounts; revoke replaced ones | table above; demo accounts only; HubSpot service key has no expiry, so it is revoked by Kristian when the build closes or goes public, and any replaced key is revoked at source in the same step |
 | Limits (R10, S7, P12, L3) | timeouts, caps, payload size, rate limits | HubSpot call timeout 15 s; webhook body over 256 KB rejected; HubSpot free-account rate limit checked in P2 and the runner paced under it; no AI cost |
 | Model (A4) | exact model ID, fallback, alert on drift | N/A because there is no AI step |
 | Approval (A2, S11) | approval before every write; off only with the client's written yes | no approval per write (that removes the point of a sync); replaced by code checks + needs-attention (eval level Standard, 5.); replay is a person's action and the log records who pressed it |
@@ -136,17 +136,17 @@ Reliability and security defaults:
 | WooCommerce turns the webhook off after 5 failed deliveries | 200 for every signed request; checks run after the answer | A |
 | HubSpot down, slow or rate-limited | retries; then needs-attention + alert + replay | T, R |
 | Order lost without anyone knowing | every order ends synced, skipped or in needs-attention; error workflow; daily summary | all kinds; S |
-| Test data mixes with Q-116 in the shared HubSpot account | own e-mail domains, `sync_source` marker, reset touches only those | setup check |
+| Test data mixes with the other demo build's data in the shared HubSpot account | own e-mail domains, `sync_source` marker, reset touches only those | setup check |
 | HubSpot free account cannot do what the design needs (unique property, upsert by it, archived value reuse) | first-hour check P2; fallback: ledger + search before create, with a recorded ADR | P2 exit gate |
 | n8n webhook cannot give the raw body for the signature check | first-hour check P2; fallback: the signature check in a Code node on the binary body | P2 exit gate |
-| Shared n8n busy | runs only in a free slot, announced in n8n-usage.md | preflight |
+| Shared n8n busy | runs only in a free slot, booked and announced to the other builds | preflight |
 
 ## 5. Eval gate
 
-Rules and tables: eval-gate skill (skills/eval-gate/SKILL.md) and kristian-os EVAL_STANDARD.md; not copied here.
+Rules and tables: the author's private test procedure; not part of this repository. The rules that apply here are written out in `evals/eval_config.yaml` and `tests/CASES.md`.
 
-Eval level: Proposed Critical (it writes customer and order records into the CRM with no person checking each write, and deal amounts feed sales reports that people rely on; the skill names "write numbers others rely on later" as Critical. Standard is arguable because HubSpot keeps property history, so most wrong writes can be undone; when unsure, the skill says one level up)
-Eval level: Decided Standard, owner, 2026-10-20 (CRM records keep a history and can be undone; shop and accounting stay the money truth)
+Eval level: Proposed Critical (it writes customer and order records into the CRM with no person checking each write, and deal amounts feed sales reports that people rely on; the procedure names "write numbers others rely on later" as Critical. Standard is arguable because HubSpot keeps property history, so most wrong writes can be undone; when unsure, the procedure says one level up)
+Eval level: Decided Standard, Kristian, 2026-10-20 (CRM records keep a history and can be undone; shop and accounting stay the money truth)
 
 - **Five hard rules** (named so cases and red teams can point at them; at Standard they are ordinary gated checks, and since every check here is code, one break in any case of any run = FAIL):
   - H1 right values: every HubSpot field equals the expected cleaned value (amount, currency, stage, e-mail, name, phone, address, order date).
@@ -156,11 +156,11 @@ Eval level: Decided Standard, owner, 2026-10-20 (CRM records keep a history and 
   - H5 good data kept: no stored value is replaced by a blank or by an older order version.
 - Approval per write: not part of Standard (records keep a history and can be undone); everything that fails a check goes to a person.
 - README limit: if a client's HubSpot amounts feed invoicing or accounting, the level for that client is Critical (stricter test and review setup).
-- **Code checks, 100%:** there is no AI step, so every case is a code check; a miss is a bug. PASS = every gated case gives its expected result in all 3 runs and 0 critical failures. No % claim (the rate table does not apply; eval-gate §3).
-- **Repeat runs:** the full set (visible + hold-out) runs 3 times on one frozen workflow commit; results report the worst run and every case that changed between runs. (The skill asks one run for plain code; the owner's test standard asks 3, and real HubSpot timing can differ between runs.)
+- **Code checks, 100%:** there is no AI step, so every case is a code check; a miss is a bug. PASS = every gated case gives its expected result in all 3 runs and 0 critical failures. No % claim (a pass-rate table does not apply).
+- **Repeat runs:** the full set (visible + hold-out) runs 3 times on one frozen workflow commit; results report the worst run and every case that changed between runs. (The procedure asks one run for plain code; Kristian's test standard asks for 3, and real HubSpot timing can differ between runs.)
 - **How a case is graded (code only):** after each case the runner reads back, through the HubSpot API and the n8n tables: number of contacts for the e-mail, number of deals for the order number, every expected field value (amount compared as an exact decimal), the link between deal and contact, the ledger row, the needs-attention row and its reason code, the Slack alert (message ID logged), the log row. Simulated failures are labelled "simulated" in the results.
 
-**Case kinds** (visible = written now with the gate; hold-out = about 30%, written later by a separate session from tests/CASES.md only, sealed by SHA-256 before the build):
+**Case kinds** (visible = written now with the gate; hold-out = about 30%, written later by a separate AI writer from tests/CASES.md only, sealed by SHA-256 before the build):
 
 | Kind | What | Expected | Visible |
 |---|---|---|---|
@@ -180,7 +180,7 @@ Visible total 76 (gate v4; 67 before). Hold-out about 33 (at least 2 per kind; i
 
 - Eval config: `evals/eval_config.yaml` + `tests/CASES.md` (rules and the case format) + generator `tests/make_cases.py` (deterministic; checks the whole set every run and stops on duplicate case IDs, a shared order number or e-mail between cases that are not marked related, a missing dependency, or an unknown expected result; a test plants each mistake) — committed before the first workflow. WooCommerce payload shapes copied from the current WooCommerce REST API docs, checked on the day.
 - Results: `evals/RESULTS.md`, every run recorded, pass or fail. Hold-out opening: same procedure as item 3 (check the seal, extract to a new empty folder, stop on any shared case ID or order number).
-- Build checks and red teams (eval-gate rule 7, Standard): 2 red teams, R1 of the gate before P3 and R2 of the build before the first gated run (with the interaction sweep); generator self-check and written preflight before the first gated run. Red-team findings that are not breaks of H1-H5 or real bugs go to the version 2 list in STATE.md (decision 4).
+- Build checks and red teams (Standard level): 2 red teams, R1 of the gate before P3 and R2 of the build before the first gated run (with the interaction sweep); generator self-check and written preflight before the first gated run. Red-team findings that are not breaks of H1-H5 or real bugs go to the version 2 list in STATE.md (decision 4).
 - Secondary, reported not gated: seconds per order (median, worst), HubSpot calls per order, retries per run.
 - Claims: "on my test set of N made-up WooCommerce orders, 0 duplicates and 0 wrong values in 3 runs", worst run, from a committed RESULTS.md entry only. Not measured: real shops, high volume, webhooks that never arrive.
 
@@ -188,44 +188,45 @@ Visible total 76 (gate v4; 67 before). Hold-out about 33 (at least 2 per kind; i
 
 | Phase | Delivers | Accept when (checkable) |
 |---|---|---|
-| P0 | scaffold (new-project), this blueprint | done: ecf12bf, KOS-CONTROLS OK; LOCKED v1.2; Q-129 kristian-wiki 59405c2 |
+| P0 | scaffold, this blueprint | done: ecf12bf, repository controls OK; LOCKED v1.2 |
 | P1 | eval gate: CASES.md, generator, 67 visible cases, config; no workflow | gate commit hash in STATE; `python tests/make_cases.py` exit 0, same SHA-256 twice; planted-mistake test exit 0 |
-| P1b | hold-out (separate session) + R1 red team of the gate (separate session) | `evals/holdout_commitment.json` committed, builder re-checks the archive SHA-256 without opening it; R1 report in the shared notes, every finding fixed or recorded |
-| P2 | owner creates the keys and the Slack app; first-hour check in n8n (waits for a free n8n slot) | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read; the 4 custom properties (`shop_order_id`, `shop_modified_at`, `sync_source`, `shop_currency`) can be created on the free account; account currency read (`/settings/v3/currencies/company-currency` or the UI): one currency means `currency` maps to `shop_currency` (R1 finding 1); a 409 or 207 answer to two parallel upserts, two parallel contact upserts with the same new e-mail give one contact, two parallel ledger writes for one new order give one row (R1 finding 6); round-trip of every field (write, read back by ID, compare): phone stored raw (phone validation off), double spaces and non-Latin text unchanged, `closedate` unchanged when the stage moves to Closed Won or Closed Lost, `shop_modified_at` is a date-time property, an archived contact's e-mail can be used again (R1 finding 7). Or a fallback recorded in an ADR |
+| P1b | hold-out (separate AI writer) + R1 red team of the gate (separate AI reviewer) | `evals/holdout_commitment.json` committed, builder re-checks the archive SHA-256 without opening it; R1 report kept outside this repository, every finding fixed or recorded |
+| P2 | Kristian creates the keys and the Slack app; first-hour check in n8n (waits for a free n8n slot) | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read; the 4 custom properties (`shop_order_id`, `shop_modified_at`, `sync_source`, `shop_currency`) can be created on the free account; account currency read (`/settings/v3/currencies/company-currency` or the UI): one currency means `currency` maps to `shop_currency` (R1 finding 1); a 409 or 207 answer to two parallel upserts, two parallel contact upserts with the same new e-mail give one contact, two parallel ledger writes for one new order give one row (R1 finding 6); round-trip of every field (write, read back by ID, compare): phone stored raw (phone validation off), double spaces and non-Latin text unchanged, `closedate` unchanged when the stage moves to Closed Won or Closed Lost, `shop_modified_at` is a date-time property, an archived contact's e-mail can be used again (R1 finding 7). Or a fallback recorded in an ADR |
 | P3 | entry, core, ledger, needs-attention, replay, summary, error workflow, fault proxy, runner, scorer, reset; first ADR | dry run on 2 cases, runner exit 0 (not a result); full visible run recorded in RESULTS.md, runner exit 0 |
-| P4 | pre-gate readiness | R2 red team of the build (separate session) report in the shared notes, findings fixed or recorded; interaction sweep cases added; 3 full visible runs in a row meet the gate (labelled not gated); `evals/PREFLIGHT.md` done; checkpoint review of the frozen commit OK; 2-case dry run exit 0 |
+| P4 | pre-gate readiness | R2 red team of the build (separate AI reviewer) report kept outside this repository, findings fixed or recorded; interaction sweep cases added; 3 full visible runs in a row meet the gate (labelled not gated); `evals/PREFLIGHT.md` done; checkpoint review of the frozen commit OK; 2-case dry run exit 0 |
 | P5 | 3 gated runs (visible + hold-out, one frozen commit) | 3 entries in RESULTS.md, runner exit 0; PASS or FAIL recorded |
-| P6 | README in client words + diagram + limits + "going live" steps, cover image, Loom if top 3-4 | eval-gate build-checks.md "Before go-live" items for every build done (forced failure in an automatic run alerts in `#data-sync-alerts`; frozen test PASS on the shipped commit); publish gate is a separate owner decision |
+| P6 | README in client words + diagram + limits + "going live" steps, cover image, Loom if top 3-4 | the "Before go-live" checks done (forced failure in an automatic run alerts in `#data-sync-alerts`; frozen test PASS on the shipped commit); publish gate is a separate decision for Kristian |
 
 **Done (quality bar)** — all five hold:
 1. End to end: a signed WooCommerce order event becomes one HubSpot contact and one linked deal with exact values; updates, resends and late older updates are handled; every failed order is in needs-attention with a Slack alert, and replay works.
 2. Safety: 0 breaks of the five hard rules (H1-H5) in all 3 gated runs.
 3. Every gated case gives its expected result in all 3 runs (code checks 100%), or the FAIL is recorded honestly and fixed in a new version.
-4. Test standard met: 67 visible cases written before the build (9 more added with gate v4, after the first gated series), about 30% hold-out by a separate session, 3 runs, worst run reported, every run recorded.
+4. Test standard met: 67 visible cases written before the build (9 more added with gate v4, after the first gated series), about 30% hold-out by a separate AI writer, 3 runs, worst run reported, every run recorded.
 5. README in client words with the diagram, the limits, "going live" steps and a cover image; numbers only from RESULTS.md.
 
 ## 7. Decisions
 
-Locked (owner, 2026-10-20 plan approval; change only by a dated line in 8.):
+Locked (Kristian, 2026-10-20 plan approval; change only by a dated line in 8.):
 1. No AI step in v1 (2026-10-20). Every check here is a fixed rule, and code is cheaper, faster and testable to 100%. The README says "AI only where it helps" as a selling point. Rejected: an AI step that cleans messy fields (adds cost, a rate claim, and a new way to write wrong values).
 2. Upsert by key for every write, ledger plus HubSpot unique property (2026-10-20). Rejected: search before create (HubSpot search can lag a few seconds behind writes, so two quick events can still make a duplicate).
 3. Fix at source, replay for outages (2026-10-20). A failed order is fixed in the shop, and the shop's update closes the row; replay is only for CRM outages. Rejected: an edit form for the payload (a second place where data is typed by hand, and more to test).
-4. Red teams stay at the Standard two (2026-10-20); a finding that is not a break of H1-H5 or a real bug goes to the version 2 list, not into this build. Why: item 7 needed six fix rounds before a similar rule (its decision 16). Rejected: open-ended red teams.
+4. Red teams stay at the Standard two (2026-10-20); a finding that is not a break of H1-H5 or a real bug goes to the version 2 list, not into this build. Why: another demo build needed six fix rounds before a similar rule. Rejected: open-ended red teams.
 
-Decided (owner, 2026-10-20):
+Decided (Kristian, 2026-10-20):
 5. Eval level Standard (see 5.). Rejected: Critical (it adds a red team after every build phase and a safeguard line, while the gate is already 100% because there is no AI step; the CRM records can be undone).
-6. HubSpot: the existing "Portfolio Demo" account, separated from Q-116 as in 3. Rejected: a new HubSpot account.
+6. HubSpot: the existing "Portfolio Demo" account, separated from the other demo build as in 3. Rejected: a new HubSpot account.
 7. Repo name `n8n-data-sync`. Rejected: `n8n-ai-data-sync` (there is no AI step).
 
 Open:
-- n8n slot for P2-P5: owner says when n8n is free (P1 and P1b need no n8n).
-- Owner creates the keys, Slack app and secret in the table in 3. before P2.
+- n8n slot for P2-P5: Kristian says when n8n is free (P1 and P1b need no n8n).
+- Kristian creates the keys, Slack app and secret in the table in 3. before P2.
 
 ## 8. Version log
 
-- v1.4 2026-10-26: gate version 4 after the P5 gated FAIL (hold-out H-R02, evals/RESULTS.md 2026-10-26) and the R3 blind-spot red team (q129-r3-blindspot-redteam.md in the shared notes). Owner's words in the Q-129 session: "Pixel 9." (voice-to-text; read as "fix all 9"), answering the request to approve R3 findings 1-9, the H-R02 fix and gate v4. Section 5: 9 new visible cases (U 7, A 8, T 8, R 9; 76 in all), hold-out about 33. Details: evals/eval_config.yaml v4 and tests/CASES.md. No expected value of an existing visible case changed.
-- v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report q129-r1-gate-redteam.md in the planning session's shared notes). Owner decision: "Approved: R1 findings 2, 3, 4, 5 and 11 (test changes), owner, 2026-10-20." (owner's words in the R1 session: "yes, I agrove."; confirmed in the planning session: "I approve the changes in that session"). Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
-- v1.2.1 2026-10-20: shared n8n coordination rule added to the stack line (owner's words, relayed by the planning session: "when one need exclusively for itself the platform, it needs to send messages to others and when it stop, again send the messages that it's free"). No other change.
-- v1.2 2026-10-20: owner approval ("approved."): decisions 1-4 locked; LOCKED; Q-129 registered (kristian-wiki 59405c2).
-- v1.1 2026-10-20: owner decisions: eval level Standard (critical failures CF1-CF5 become the hard rules H1-H5; red teams 2 instead of one per build phase; no safeguard line), HubSpot "Portfolio Demo", repo name `n8n-data-sync`.
-- v1.0 2026-10-20: first version, for owner review.
+- v1.4.1 2026-10-30: Text edit 2026-10-30 (Kristian's instruction, for publication): internal reference labels and the word "owner" were removed from the text; no decision, rule, number or result changed. The original text is in git history.
+- v1.4 2026-10-26: gate version 4 after the P5 gated FAIL (hold-out H-R02, evals/RESULTS.md 2026-10-26) and the R3 blind-spot red team (report kept outside this repository). Kristian's words: "Pixel 9." (voice-to-text; read as "fix all 9"), answering the request to approve R3 findings 1-9, the H-R02 fix and gate v4. Section 5: 9 new visible cases (U 7, A 8, T 8, R 9; 76 in all), hold-out about 33. Details: evals/eval_config.yaml v4 and tests/CASES.md. No expected value of an existing visible case changed.
+- v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report kept outside this repository). Kristian approved R1 findings 2, 3, 4, 5 and 11 (test changes) on 2026-10-20 (his words to the R1 reviewer: "yes, I agrove."; confirmed later: "I approve the changes in that session"). Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
+- v1.2.1 2026-10-20: shared n8n coordination rule added to the stack line (Kristian's words, relayed: "when one need exclusively for itself the platform, it needs to send messages to others and when it stop, again send the messages that it's free"). No other change.
+- v1.2 2026-10-20: Kristian's approval ("approved."): decisions 1-4 locked; LOCKED.
+- v1.1 2026-10-20: Kristian's decisions: eval level Standard (critical failures CF1-CF5 become the hard rules H1-H5; red teams 2 instead of one per build phase; no safeguard line), HubSpot "Portfolio Demo", repo name `n8n-data-sync`.
+- v1.0 2026-10-20: first version, for Kristian's review.

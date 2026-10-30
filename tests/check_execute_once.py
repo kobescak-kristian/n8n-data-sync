@@ -1,4 +1,4 @@
-"""Static check: no n8n Code node with "Execute Once" reads all its input items (H-R02, F-141).
+"""Static check: no n8n Code node with "Execute Once" reads all its input items (H-R02).
 
     python tests/check_execute_once.py            -> checks workflows/test/*.json and workflows/live/*.json
     python tests/check_execute_once.py --self-test -> also shows that a planted node is caught

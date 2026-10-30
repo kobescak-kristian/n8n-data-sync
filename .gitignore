@@ -1,4 +1,4 @@
-# Secrets first (GOVERNANCE §1; Target KOS 06 §C4): never tracked.
+# Secrets first: never tracked.
 .env
 .env.*
 *.env

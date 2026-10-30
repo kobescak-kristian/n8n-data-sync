@@ -21,7 +21,7 @@ When sources disagree: an adopted ADR outranks the text it amends;
 documents state intent, implementation and tests state behaviour, and a
 gap between them is a finding to surface, not something to silently
 reconcile; `STATE.md` is the status surface; if canonical sources
-conflict, stop and ask the owner.
+conflict, stop and ask Kristian.
 
 ## Task routing
 
@@ -35,12 +35,11 @@ Starting points, not exhaustive reading lists.
 
 ## Always-on constraints
 
-- Tier 0 artifacts are README, ADRs, LICENSE, and AGENTS.md.
-  STATE.md is separately required by the build-repo STATE rule.
-  Do not create SYSTEM_WALKTHROUGH.md, CHANGELOG.md, RUNBOOK.md or
-  other trigger-gated artifacts without an instruction citing the
-  trigger. ADRs are for genuine material decisions only, with at least
-  one required. Version log lives in README.
+- The required files are README, ADRs, LICENSE, AGENTS.md and
+  STATE.md. Do not create SYSTEM_WALKTHROUGH.md, CHANGELOG.md,
+  RUNBOOK.md or similar extra files unless asked. ADRs are for genuine
+  material decisions only, with at least one required. Version log
+  lives in README.
 - Done means the acceptance condition is demonstrated, not that a file
   exists.
 - No secrets or machine-local absolute paths in tracked files.
@@ -49,4 +48,4 @@ Starting points, not exhaustive reading lists.
 
 ## Verification
 
-- Tier 0 structure: `python .githooks/validate_artifacts.py .`
+- Required-file structure: `python .githooks/validate_artifacts.py .`

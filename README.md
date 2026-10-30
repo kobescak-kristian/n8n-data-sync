@@ -50,7 +50,7 @@ Design decisions are recorded in [`adr/`](adr/): amounts in the shop's currency 
 
 ## Outcome
 
-Tested on **110 made-up WooCommerce order cases**, run **3 times** on one frozen version of the workflows (2026-10-26). The expected result of every case was written down before the runs. 76 cases are visible in this repository (67 written before the build, 9 added after the first test series); 34 were written and sealed by a separate session and opened only for these runs. All numbers below come from that record ([`evals/RESULTS.md`](evals/RESULTS.md), second test series; result files in [`tests/results/`](tests/results/)).
+Tested on **110 made-up WooCommerce order cases**, run **3 times** on one frozen version of the workflows (2026-10-26). The expected result of every case was written down before the runs. 76 cases are visible in this repository (67 written before the build, 9 added after the first test series); 34 were written and sealed by a separate AI writer that never saw the build, and opened only for these runs. All numbers below come from that record ([`evals/RESULTS.md`](evals/RESULTS.md), second test series; result files in [`tests/results/`](tests/results/)).
 
 | Result | Number |
 |---|---|
@@ -64,7 +64,7 @@ Tested on **110 made-up WooCommerce order cases**, run **3 times** on one frozen
 
 What the cases cover: clean orders; messy but valid orders (spaces, upper-case e-mails, accents and non-Latin names, phone formats); returning customers; updates, refunds and late older updates; resent and parallel orders; each missing field; invalid formats; bad, missing and changed signatures; HubSpot errors (simulated: 429, server errors, timeouts, closed connections, 400/401/403/404); replay and fixes from the shop; the daily summary; and a forced crash in an automatic run, which must alert in Slack.
 
-**A failure on the way.** The first test series on 2026-10-26 failed: 95 of 96 cases in each run. One sealed case had two open needs-attention rows for the same order, and the second row never closed, because a setting made one n8n step read only its first input row. The fix removed that setting from 9 steps, an automatic check ([`tests/check_execute_once.py`](tests/check_execute_once.py)) now runs before every test series, and 9 new cases were added. The new series above was run with a new set of sealed cases written by a separate session. Both series are in [`evals/RESULTS.md`](evals/RESULTS.md).
+**A failure on the way.** The first test series on 2026-10-26 failed: 95 of 96 cases in each run. One sealed case had two open needs-attention rows for the same order, and the second row never closed, because a setting made one n8n step read only its first input row. The fix removed that setting from 9 steps, an automatic check ([`tests/check_execute_once.py`](tests/check_execute_once.py)) now runs before every test series, and 9 new cases were added. The new series above was run with a new set of sealed cases from the same kind of separate writer. Both series are in [`evals/RESULTS.md`](evals/RESULTS.md).
 
 How the test works: [`tests/runner.py`](tests/runner.py) signs and sends each event, then reads HubSpot and the n8n tables back and grades the case in code; [`tests/score.py`](tests/score.py) checks the 3 runs together. HubSpot errors come from a local fault proxy ([`tests/proxy.py`](tests/proxy.py)) and are labelled "simulated". The demo shop, Harbour E-Bikes, is made up; every name, e-mail (`example.com` domains), address and order is invented.
 

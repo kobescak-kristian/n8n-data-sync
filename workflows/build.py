@@ -1,4 +1,4 @@
-"""Generate and load the n8n workflows of the data sync (Q-129, n8n-data-sync).
+"""Generate and load the n8n workflows of the data sync (n8n-data-sync).
 
 python workflows/build.py          -> workflows/*.json (test copy) and workflows/live/*.json (live export);
                                       placeholders only, no credential or workflow IDs
@@ -81,7 +81,7 @@ def js(w, text):
 
 
 def code(w, name, text, x, y=0, **extra):
-    # A Code node that reads $input.all() never gets executeOnce: n8n then passes only the first item (H-R02, F-141;
+    # A Code node that reads $input.all() never gets executeOnce: n8n then passes only the first item (H-R02;
     # tests/check_execute_once.py stops it).
     return w.add(name, "n8n-nodes-base.code", 2, {"jsCode": js(w, text)}, x, y, **extra)
 
@@ -193,7 +193,7 @@ def error_workflow(w):
 
 def build_hubspot_call(live):
     """One HubSpot write (POST, JSON body) with the CASES.md 3.7 retry rules, unrolled to 3 attempts. After each retry
-    wait the ledger is read again; a newer version there stops the retry (owner decision 2026-10-22, sweep SW02)."""
+    wait the ledger is read again; a newer version there stops the retry (Kristian's decision 2026-10-22, sweep SW02)."""
     w = WF("hubspot-call", "Q129 HubSpot call", live)
     trigger(w)
 
