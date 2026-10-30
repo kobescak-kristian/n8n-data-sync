@@ -5,8 +5,9 @@
 # only to the next version, by a new dated version of this file and a note in
 # evals/RESULTS.md; the old version stays in git history.
 # Text edit 2026-10-30 (Kristian's instruction, for publication): internal
-# reference labels and the word "owner" were removed from comments and
-# text values; no case, expected result, grading, level or run changed,
+# reference labels, the word "owner" and a process note that does not
+# help a reader were removed from comments and text values, and quoted
+# words became summaries; no case, expected result, grading, level or run changed,
 # so the gate version stays 4. The original text is in git history.
 version: 4
 date: 2026-10-26
@@ -14,7 +15,7 @@ plan: "BLUEPRINT.md v1.4 (LOCKED 2026-10-20; v1.3 records the R1 changes, v1.4 g
 changes:
   - version: 4
     date: 2026-10-26
-    decision: "Kristian, 2026-10-26: 'Pixel 9.' (voice-to-text; read as 'fix all 9'), answering: approve R3 findings 1-9, the H-R02 fix and gate v4"
+    decision: "Kristian approved R3 findings 1-9, the H-R02 fix and gate v4 on 2026-10-26"
     after_gated_fail: "P5 gated series FAIL on hold-out H-R02 (evals/RESULTS.md 2026-10-26); the old hold-out is spent, a new one is written after this version is committed"
     what: >-
       R3 blind-spot red team (report kept outside this repository). 9 new visible cases (76 in all):
@@ -172,7 +173,6 @@ runs:
   why_3: "Kristian's test standard asks for 3 runs; real HubSpot timing can differ between runs (BLUEPRINT section 5)"
   dry_run: "2 cases through the full path before the first full run; runner exit 0; not a result"
   build_checks: "interaction sweep, generator self-check and evals/PREFLIGHT.md before the first gated run; red teams R1 (this gate, before P3) and R2 (the build, before the first gated run)"
-  shared_n8n: "exclusive use booked and announced to the other builds that share this n8n (BLUEPRINT section 3)"
   recording: "every run appended to evals/RESULTS.md, pass or fail, never edited (except the 2026-10-30 text edit noted at the top of that file)"
   done: "results artifact committed AND runner exit code 0"
 

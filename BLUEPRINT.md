@@ -10,7 +10,7 @@
 - Trigger: Kristian's portfolio plan ("Data sync with checks": no duplicates, no missing fields, alerts; 2026-10-18).
 - All n8n names below use the prefix Q129.
 - Repo: `n8n-data-sync` (Kristian, 2026-10-20), private until the publish gate (publishing is Kristian's decision).
-- Timebox and budget: about 8-10 hours of build work in 2 parts, plus the hold-out writing and the red teams. No fixed date: done when the quality bar (section 6, "Done") holds. Money: $0 (no AI step; HubSpot free, Slack free).
+- Budget: $0 (no AI step; HubSpot free, Slack free). Done when the quality bar (section 6, "Done") holds.
 
 ## 1. Problem
 
@@ -18,7 +18,7 @@ A small online shop sells through WooCommerce and keeps customers in a CRM (HubS
 
 ## 2. Scope
 
-The demo shop is made up: **Harbour E-Bikes** (the same made-up company as in another demo build, so the portfolio tells one story). All names, e-mails (example.com domains), phones, addresses and orders are invented (no real business data).
+The demo shop is made up: **Harbour E-Bikes**. All names, e-mails (example.com domains), phones, addresses and orders are invented (no real business data).
 
 What v1 does:
 - **Takes shop orders in.** One webhook that receives WooCommerce order events (`order.created`, `order.updated`) in WooCommerce's real JSON format. It checks the WooCommerce signature; a request without a valid signature is rejected and nothing is written.
@@ -67,7 +67,7 @@ Test tools: Python runner (signs and sends payloads, reads HubSpot and the table
 ```
 
 **Stack proposal:**
-- **n8n:** local 2.43.7, shared with other builds. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130. Never restart, upgrade or reconfigure n8n; never touch other builds' workflows or credentials. Building in parallel is always fine. Before exclusive use (a full or gated test series, or anything that affects n8n as a whole): check the shared booking list; if another build has an open booking, wait for its "free" message; if not, book n8n (start, expected end, what) and send a one-line message to the other builds. When finished: close the booking and send a one-line "n8n free" message. Messages only at start and end of exclusive use (Kristian's rule, 2026-10-20).
+- **n8n:** local 2.43.7. Names prefixed `Q129`, tag `q129`, data tables `q129_*`, webhooks `/webhook/q129-*`, fault proxy port 8130.
 - **HubSpot:** the existing free demo account "Portfolio Demo" (made for another demo build, separate from Kristian's real HubSpot; Kristian, 2026-10-20). This build adds 2 custom deal properties (`shop_order_id`, unique; `shop_modified_at`) and 1 contact property (`sync_source`), plus a text deal property `shop_currency` if P2 finds that the free account has one currency (R1 finding 1; ADR). Its test records use only its own e-mail domains, and the reset touches only records with `sync_source = harbour-demo-shop`, so the other build's contacts are never touched.
 - **Slack:** the existing demo workspace; new channel `#data-sync-alerts`.
 - **No AI provider, no Google, no new paid service.**
@@ -119,7 +119,7 @@ Reliability and security defaults:
 | Approval (A2, S11) | approval before every write; off only with the client's written yes | no approval per write (that removes the point of a sync); replaced by code checks + needs-attention (eval level Standard, 5.); replay is a person's action and the log records who pressed it |
 | Data (S9, R13, L6) | LLM gets only needed fields; retention per place | no LLM; log keeps order number, result, reasons, IDs (no e-mail, no address); ledger keeps order number, version and a SHA-256 of the cleaned data, not the values (R1 finding 13); needs-attention keeps the payload until the row is closed + 30 days; n8n executions pruned by the n8n default; Slack alerts carry order number and reason, not the address |
 | Test and live (R3, R14) | live copy with own credentials and data; rollback written | demo only; README "going live" section: own HubSpot key, own secret, live export without test helpers; rollback = deactivate, import the previous commit, replay the needs-attention rows |
-| Hosting (S12, P10) | managed host or hardened self-hosting | N/A for the demo (local shared n8n, not exposed); README tells a client to use n8n Cloud or a managed host |
+| Hosting (S12, P10) | managed host or hardened self-hosting | N/A for the demo (local n8n, not exposed); README tells a client to use n8n Cloud or a managed host |
 | Code track (P1, P2, P5, P8) | lock file, audits, pinned actions | test tools only: Python standard library plus `requests`, pinned in `requirements.txt` with hashes |
 | LangGraph (L1, L2, L4, L6) | — | N/A because there is no LangGraph |
 
@@ -139,7 +139,6 @@ Reliability and security defaults:
 | Test data mixes with the other demo build's data in the shared HubSpot account | own e-mail domains, `sync_source` marker, reset touches only those | setup check |
 | HubSpot free account cannot do what the design needs (unique property, upsert by it, archived value reuse) | first-hour check P2; fallback: ledger + search before create, with a recorded ADR | P2 exit gate |
 | n8n webhook cannot give the raw body for the signature check | first-hour check P2; fallback: the signature check in a Code node on the binary body | P2 exit gate |
-| Shared n8n busy | runs only in a free slot, booked and announced to the other builds | preflight |
 
 ## 5. Eval gate
 
@@ -191,11 +190,11 @@ Visible total 76 (gate v4; 67 before). Hold-out about 33 (at least 2 per kind; i
 | P0 | scaffold, this blueprint | done: ecf12bf, repository controls OK; LOCKED v1.2 |
 | P1 | eval gate: CASES.md, generator, 67 visible cases, config; no workflow | gate commit hash in STATE; `python tests/make_cases.py` exit 0, same SHA-256 twice; planted-mistake test exit 0 |
 | P1b | hold-out (separate AI writer) + R1 red team of the gate (separate AI reviewer) | `evals/holdout_commitment.json` committed, builder re-checks the archive SHA-256 without opening it; R1 report kept outside this repository, every finding fixed or recorded |
-| P2 | Kristian creates the keys and the Slack app; first-hour check in n8n (waits for a free n8n slot) | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read; the 4 custom properties (`shop_order_id`, `shop_modified_at`, `sync_source`, `shop_currency`) can be created on the free account; account currency read (`/settings/v3/currencies/company-currency` or the UI): one currency means `currency` maps to `shop_currency` (R1 finding 1); a 409 or 207 answer to two parallel upserts, two parallel contact upserts with the same new e-mail give one contact, two parallel ledger writes for one new order give one row (R1 finding 6); round-trip of every field (write, read back by ID, compare): phone stored raw (phone validation off), double spaces and non-Latin text unchanged, `closedate` unchanged when the stage moves to Closed Won or Closed Lost, `shop_modified_at` is a date-time property, an archived contact's e-mail can be used again (R1 finding 7). Or a fallback recorded in an ADR |
+| P2 | Kristian creates the keys and the Slack app; first-hour check in n8n | `tools/probe.py` exit 0 on: raw-body signature check in the webhook; HubSpot unique property, upsert by it, two upserts at the same moment give one deal, an archived deal's order number can be used again; rate limit read; the 4 custom properties (`shop_order_id`, `shop_modified_at`, `sync_source`, `shop_currency`) can be created on the free account; account currency read (`/settings/v3/currencies/company-currency` or the UI): one currency means `currency` maps to `shop_currency` (R1 finding 1); a 409 or 207 answer to two parallel upserts, two parallel contact upserts with the same new e-mail give one contact, two parallel ledger writes for one new order give one row (R1 finding 6); round-trip of every field (write, read back by ID, compare): phone stored raw (phone validation off), double spaces and non-Latin text unchanged, `closedate` unchanged when the stage moves to Closed Won or Closed Lost, `shop_modified_at` is a date-time property, an archived contact's e-mail can be used again (R1 finding 7). Or a fallback recorded in an ADR |
 | P3 | entry, core, ledger, needs-attention, replay, summary, error workflow, fault proxy, runner, scorer, reset; first ADR | dry run on 2 cases, runner exit 0 (not a result); full visible run recorded in RESULTS.md, runner exit 0 |
 | P4 | pre-gate readiness | R2 red team of the build (separate AI reviewer) report kept outside this repository, findings fixed or recorded; interaction sweep cases added; 3 full visible runs in a row meet the gate (labelled not gated); `evals/PREFLIGHT.md` done; checkpoint review of the frozen commit OK; 2-case dry run exit 0 |
 | P5 | 3 gated runs (visible + hold-out, one frozen commit) | 3 entries in RESULTS.md, runner exit 0; PASS or FAIL recorded |
-| P6 | README in client words + diagram + limits + "going live" steps, cover image, Loom if top 3-4 | the "Before go-live" checks done (forced failure in an automatic run alerts in `#data-sync-alerts`; frozen test PASS on the shipped commit); publish gate is a separate decision for Kristian |
+| P6 | README in client words + diagram + limits + "going live" steps, cover image | the "Before go-live" checks done (forced failure in an automatic run alerts in `#data-sync-alerts`; frozen test PASS on the shipped commit); publish gate is a separate decision for Kristian |
 
 **Done (quality bar)** — all five hold:
 1. End to end: a signed WooCommerce order event becomes one HubSpot contact and one linked deal with exact values; updates, resends and late older updates are handled; every failed order is in needs-attention with a Slack alert, and replay works.
@@ -210,7 +209,7 @@ Locked (Kristian, 2026-10-20 plan approval; change only by a dated line in 8.):
 1. No AI step in v1 (2026-10-20). Every check here is a fixed rule, and code is cheaper, faster and testable to 100%. The README says "AI only where it helps" as a selling point. Rejected: an AI step that cleans messy fields (adds cost, a rate claim, and a new way to write wrong values).
 2. Upsert by key for every write, ledger plus HubSpot unique property (2026-10-20). Rejected: search before create (HubSpot search can lag a few seconds behind writes, so two quick events can still make a duplicate).
 3. Fix at source, replay for outages (2026-10-20). A failed order is fixed in the shop, and the shop's update closes the row; replay is only for CRM outages. Rejected: an edit form for the payload (a second place where data is typed by hand, and more to test).
-4. Red teams stay at the Standard two (2026-10-20); a finding that is not a break of H1-H5 or a real bug goes to the version 2 list, not into this build. Why: another demo build needed six fix rounds before a similar rule. Rejected: open-ended red teams.
+4. Red teams stay at the Standard two (2026-10-20); a finding that is not a break of H1-H5 or a real bug goes to the version 2 list, not into this build. Rejected: open-ended red teams.
 
 Decided (Kristian, 2026-10-20):
 5. Eval level Standard (see 5.). Rejected: Critical (it adds a red team after every build phase and a safeguard line, while the gate is already 100% because there is no AI step; the CRM records can be undone).
@@ -218,15 +217,13 @@ Decided (Kristian, 2026-10-20):
 7. Repo name `n8n-data-sync`. Rejected: `n8n-ai-data-sync` (there is no AI step).
 
 Open:
-- n8n slot for P2-P5: Kristian says when n8n is free (P1 and P1b need no n8n).
 - Kristian creates the keys, Slack app and secret in the table in 3. before P2.
 
 ## 8. Version log
 
-- v1.4.1 2026-10-30: Text edit 2026-10-30 (Kristian's instruction, for publication): internal reference labels and the word "owner" were removed from the text; no decision, rule, number or result changed. The original text is in git history.
-- v1.4 2026-10-26: gate version 4 after the P5 gated FAIL (hold-out H-R02, evals/RESULTS.md 2026-10-26) and the R3 blind-spot red team (report kept outside this repository). Kristian's words: "Pixel 9." (voice-to-text; read as "fix all 9"), answering the request to approve R3 findings 1-9, the H-R02 fix and gate v4. Section 5: 9 new visible cases (U 7, A 8, T 8, R 9; 76 in all), hold-out about 33. Details: evals/eval_config.yaml v4 and tests/CASES.md. No expected value of an existing visible case changed.
-- v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report kept outside this repository). Kristian approved R1 findings 2, 3, 4, 5 and 11 (test changes) on 2026-10-20 (his words to the R1 reviewer: "yes, I agrove."; confirmed later: "I approve the changes in that session"). Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
-- v1.2.1 2026-10-20: shared n8n coordination rule added to the stack line (Kristian's words, relayed: "when one need exclusively for itself the platform, it needs to send messages to others and when it stop, again send the messages that it's free"). No other change.
+- v1.4.1 2026-10-30: Text edit 2026-10-30 (Kristian's instruction, for publication): internal reference labels and the word "owner" were removed from the text; process notes and planning remarks that do not help a reader were removed (with the v1.2.1 entry); quoted words became summaries. No design decision, test rule, number or result changed. The original text is in git history.
+- v1.4 2026-10-26: gate version 4 after the P5 gated FAIL (hold-out H-R02, evals/RESULTS.md 2026-10-26) and the R3 blind-spot red team (report kept outside this repository). Kristian approved R3 findings 1-9, the H-R02 fix and gate v4. Section 5: 9 new visible cases (U 7, A 8, T 8, R 9; 76 in all), hold-out about 33. Details: evals/eval_config.yaml v4 and tests/CASES.md. No expected value of an existing visible case changed.
+- v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report kept outside this repository). Kristian approved R1 findings 2, 3, 4, 5 and 11 (test changes) on 2026-10-20. Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
 - v1.2 2026-10-20: Kristian's approval ("approved."): decisions 1-4 locked; LOCKED.
 - v1.1 2026-10-20: Kristian's decisions: eval level Standard (critical failures CF1-CF5 become the hard rules H1-H5; red teams 2 instead of one per build phase; no safeguard line), HubSpot "Portfolio Demo", repo name `n8n-data-sync`.
 - v1.0 2026-10-20: first version, for Kristian's review.
