@@ -2,7 +2,7 @@
 
     python tests/check_workflows_gate.py      # exit 0 = only the accepted findings; 1 = anything else
 
-Runs tests/check_n8n_workflows.py (a shared checker; only its docstring differs from the shared copy) on workflows/test and workflows/live.
+Runs tests/check_n8n_workflows.py (a shared checker) on workflows/test and workflows/live.
 Kristian's decision 2026-10-21 ("Yes to both."), 4 accepted items:
   - the 2 HMAC-signed webhooks 'Order in' (entry.json) and 'Summary in (test)' (summary.json): WooCommerce
     cannot send an auth header; the signature is checked in the workflow on the raw bytes (adr/003);

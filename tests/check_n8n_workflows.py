@@ -4,7 +4,7 @@
 Named by the "Entry points" line of the build's blueprint template; it
 checks webhook auth, the error workflow and that no credential value is
 in the JSON.
-A shared checker; only this docstring differs from the shared copy.
+A shared checker.
 
 Copy it into the build repository as tests/check_n8n_workflows.py and run
 it before every frozen commit:

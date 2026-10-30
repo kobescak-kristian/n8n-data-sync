@@ -1,9 +1,9 @@
 # ADR-003: The order webhook is an n8n Webhook node v1 with "Binary File" on; signature check and JSON parse run on the raw bytes
 
-**Status:** Accepted (2026-10-28). Proposed 2026-10-20 (P2 probe) with the condition: `Q129 Entry` is built this way and the first full visible run passes the A cases (A01-A06). Verified 2026-10-28: `workflows/live/entry.json` node "Order in" is a Webhook node version 1 with "Binary File" on; A01-A06 passed in `tests/results/vis-10.json` to `vis-12.json` and `gated-4.json` to `gated-6.json`. Kristian's words 2026-10-28, answering "Mark the 3 ADRs Accepted and add the 2 register entries?" (the second part was about a private failure log, not this repository): "Yes to both".
+**Status:** Accepted (2026-10-28). Proposed 2026-10-20 (P2 probe) with the condition: `Q129 Entry` is built this way and the first full visible run passes the A cases (A01-A06). Verified 2026-10-28: `workflows/live/entry.json` node "Order in" is a Webhook node version 1 with "Binary File" on; A01-A06 passed in `tests/results/vis-10.json` to `vis-12.json` and `gated-4.json` to `gated-6.json`.
 Date: 2026-10-20
 Author: Kristian Kobescak; drafted with Claude Code (P2)
-Text edit 2026-10-30 (Kristian's instruction, for publication): internal reference labels and the word "owner" were removed from the text; no decision, rule, number or result changed. The original text is in git history.
+Text edit 2026-10-30, for publication: wording tidied; no decision, number or result changed. The original text is in git history.
 
 ## Context
 

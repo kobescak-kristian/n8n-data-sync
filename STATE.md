@@ -3,7 +3,7 @@
 n8n data sync with checks: a WooCommerce order webhook goes through field and duplicate checks to a HubSpot contact and deal; failed orders go to a needs-attention list with a Slack alert and a replay step; a daily summary goes to Slack. Portfolio demo with invented data.
 
 **Classification:** PROJECT (portfolio demo)
-**Status:** Complete v0.4 (2026-10-28). Private on GitHub until the publish gate passes. Next: the publish gate runs again, bound to the commit that will be public; then Kristian switches the repository to public by hand.
+**Status:** Complete v0.4 (2026-10-28). Private on GitHub. The publish gate passed on f98bad5; it runs again on the commit that will be public.
 **Plan:** BLUEPRINT.md v1.4, LOCKED 2026-10-20 (eval level Standard; decisions 1-7). Done = the five quality-bar items in BLUEPRINT.md section 6.
 **Limits:** README.md, section "Limits".
 **Open decisions:** none.
@@ -26,7 +26,7 @@ n8n data sync with checks: a WooCommerce order webhook goes through field and du
 - 2026-10-22: the SW02 fix (the ledger is read again after each retry wait).
 - 2026-10-25: SW03 option A (keep `needs_attention`) and gate v3: one retry on HubSpot's 404 `OBJECT_NOT_FOUND` for a contact upsert (CASES.md 3.7).
 - 2026-10-28: adr/001 (currency in `shop_currency`), adr/002 (`closedate` in every deal upsert) and adr/003 (order webhook v1 with "Binary File" on) Accepted.
-- 2026-10-30: publish-gate rulings (Change Log below).
+- 2026-10-30: the check that the system runs on 3 operating systems is N/A for this repository (no keyless run path is advertised).
 
 ## Version 2 list
 
@@ -45,19 +45,8 @@ Not breaks of the hard rules H1-H5 and not v1 bugs (decision 4):
 ## Change Log
 *(New entries on top. Phase closes require evidence: exit codes, commit hashes, eval numbers. Entries before 2026-10-30 are in the git history of this file.)*
 
-- **2026-10-30 (process-noise sweep)**
-  - Kristian's ruling: remove what does not help a reader; notes on booking the shared n8n go completely; his voice-to-text quotes become summaries; planning remarks go. History is not rewritten.
-  - Removed: the n8n booking rule (with its notes on never restarting n8n and never touching other builds' workflows) and the v1.2.1 entry that added it, the "Shared n8n busy" risk row, the n8n-slot lines and the timebox line (BLUEPRINT.md); the slot times in the run entries and the booking note in the item 1 result (evals/RESULTS.md); the `shared_n8n` line (evals/eval_config.yaml); "the portfolio tells one story", "Loom if top 3-4" and the reason that pointed to another build (BLUEPRINT.md).
-  - Rewritten: PREFLIGHT items 1 and 4 now say only what matters for a valid test (no other test series on the test tools, and no tool change during the series); quoted voice-to-text decisions in BLUEPRINT.md, evals/RESULTS.md, evals/eval_config.yaml and this file are summaries. The dated text-edit notes in those records say so.
-  - Kept, because it helps a reader: the shared HubSpot demo account (it explains the `sync_source` marker and the safe reset), the winter and summer time marks (the runs crossed the clock change), and the credential fixes during development (they explain failed runs). `tests/cases/sweep.json` (its SHA-256 is recorded) keeps its SW16 note.
-- **2026-10-30 (publish gate and label cleanup)**
-  - Publish gate run on 2b05dbc: FAIL, 3 blockers. (1) The coverage canary `.githooks/.coverage-canary` was missing, so the publish scan of 2b05dbc stopped (exit 2); added, the same bytes as in the other public repositories. (2) 50 internal-label hits in tracked files. (3) The check that the system runs on 3 operating systems needed a ruling.
-  - Kristian's rulings: remove every internal label and do not call him "the owner"; keep the `Q129` prefix; a short STATE; the 3-operating-system check is N/A.
-  - Internal labels are removed from the tracked files (queue and failure numbers, private repository and note-file names, portfolio item numbers, job-post IDs, the private test procedure's name and section numbers, session names), records included (`evals/RESULTS.md`, the ADRs, BLUEPRINT.md); the original text stays in git history. Where a text means Kristian, it names him and does not call him "the owner"; where a quoted decision called him "the owner", it is now a summary, not a quote.
-  - One exception, kept by Kristian's decision ("Keep control package", 2026-10-30): the control package (`.githooks/` hook and check scripts, `.github/workflows/kos-controls.yml`, the `.kos/` control files `controls.json` and `controls-manifest.sha256`, `.codex/`) is not edited by hand, because it is the same in every public repository and CI checks it against its hash list; these files still name the private control system and use the word "owner" (98 lines outside `.codex/` found by a case-insensitive search for "owner", "kos", "governance" and queue numbers, 56 of them in `.githooks/check_work.py`). The coverage canary `.githooks/.coverage-canary` holds one deliberate fake work-item label so that the publish scan can prove it reaches that folder.
-  - The `Q129` prefix stays inside the product (workflow names, data tables, webhook path): renaming it would change the tested workflows. This short file replaces the long change log.
-  - The 3-operating-system check is N/A: README advertises no keyless run path for the system; the keyed path (n8n, HubSpot, Slack) ran on local Windows only; `python workflows/build.py` (README going-live step 6) needs no keys and only rebuilds the workflow files, run on Windows only.
-  - Code changed only in comments and docstrings: `python workflows/build.py` rebuilds `workflows/test/` and `workflows/live/` byte for byte unchanged; `python tests/make_cases.py` and `python tests/make_sweep.py` rewrite `tests/cases/visible.json` (SHA-256 ea488c9d...) and `tests/cases/sweep.json` (e78351bd...) unchanged.
-  - Checks on Windows, all exit 0: the 3 unit tests (`tests/test_make_cases.py`, `tests/test_make_sweep.py`, `tests/test_sync_js.py`); `tests/score.py` on gated-4..6: GATE PASS; `tests/check_execute_once.py`: 0 findings; `tests/check_workflows_gate.py`: PASS; `.githooks/validate_artifacts.py` (the required-file check): PASS. Label scan of the staged files (publish scan, no allowlist file): PASS (exit 0); its only label hit is the canary decoy. A wider search for the removed label kinds outside the control package finds none, apart from Kristian's quoted words and a code variable named `owner`.
-  - Secrets: 0 hits in history (the gate patterns, plus HubSpot, Slack, JWT, private-key and password checks); `.env` was never committed; Kristian checked every `.env` value against `git log -p --all`: only `N8N_URL` (a local address, not a secret) is in history.
-  - `.kos/unit.json` status line updated (it said "scaffold only"). The other gate items PASS: eval (re-derived with `tests/score.py`), README, ADRs and LICENSE, anti-patterns, links.
+- **2026-10-30 (publication preparation)**
+  - Documents tidied for publication (wording tidied, process-only notes removed); this file is now a short status file. No workflow, test case, number or result changed: `python workflows/build.py` rebuilds `workflows/test/` and `workflows/live/` byte for byte unchanged, and `python tests/make_cases.py` and `python tests/make_sweep.py` rewrite `tests/cases/visible.json` (SHA-256 ea488c9d...) and `tests/cases/sweep.json` (e78351bd...) unchanged. The earlier text is in git history.
+  - Checks on Windows, all exit 0: the 3 unit tests (`tests/test_make_cases.py`, `tests/test_make_sweep.py`, `tests/test_sync_js.py`); `tests/score.py` on gated-4..6: GATE PASS; `tests/check_execute_once.py`: 0 findings; `tests/check_workflows_gate.py`: PASS; `.githooks/validate_artifacts.py`: PASS.
+  - Publish gate on f98bad5: PASS. The publish scan of f98bad5 exited with code 0 (coverage canary found in the files and in history, zero blocking hits, secret patterns checked over all history); eval (`tests/score.py` GATE PASS), ADRs and LICENSE, links and the workflow audit PASS. Secrets at f98bad5: HubSpot, Slack, JWT and private-key checks over all history found 0 hits, and `.env` was never committed. Kristian checked every `.env` value against the history up to 2b05dbc: no key or token is in the history; the later commits change only text. The check that the system runs on 3 operating systems is N/A: README advertises no keyless run path; the keyed path (n8n, HubSpot, Slack) ran on local Windows only.
+  - `.kos/unit.json` status line updated (it said "scaffold only").

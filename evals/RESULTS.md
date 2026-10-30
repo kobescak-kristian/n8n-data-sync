@@ -5,11 +5,9 @@ format: `tests/CASES.md`. Every run is appended here, pass or fail;
 entries are never edited or deleted. A run counts only when its results
 artifact is committed and the runner exited with code 0.
 
-**Text edit 2026-10-30** (Kristian's instruction, for publication): internal
-reference labels, the word "owner" and process notes that do not help a
-reader were removed from the entries below, and Kristian's quoted words
-became summaries. No number, result or verdict changed. The original text is
-in git history.
+**Text edit 2026-10-30**, for publication: the wording of the entries below
+was tidied and process-only notes were removed. No number, result or
+verdict changed. The original text is in git history.
 
 Entry format: date | config version | workflow commit | dataset version
 (generator commit, visible SHA-256, hold-out SHA-256) | runs | cases

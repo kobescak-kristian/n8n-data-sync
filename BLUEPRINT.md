@@ -142,7 +142,7 @@ Reliability and security defaults:
 
 ## 5. Eval gate
 
-Rules and tables: the author's private test procedure; not part of this repository. The rules that apply here are written out in `evals/eval_config.yaml` and `tests/CASES.md`.
+Rules and tables: the author's own test procedure, not part of this repository. The rules that apply here are written out in `evals/eval_config.yaml` and `tests/CASES.md`.
 
 Eval level: Proposed Critical (it writes customer and order records into the CRM with no person checking each write, and deal amounts feed sales reports that people rely on; the procedure names "write numbers others rely on later" as Critical. Standard is arguable because HubSpot keeps property history, so most wrong writes can be undone; when unsure, the procedure says one level up)
 Eval level: Decided Standard, Kristian, 2026-10-20 (CRM records keep a history and can be undone; shop and accounting stay the money truth)
@@ -221,7 +221,7 @@ Open:
 
 ## 8. Version log
 
-- v1.4.1 2026-10-30: Text edit 2026-10-30 (Kristian's instruction, for publication): internal reference labels and the word "owner" were removed from the text; process notes and planning remarks that do not help a reader were removed (with the v1.2.1 entry); quoted words became summaries. No design decision, test rule, number or result changed. The original text is in git history.
+- v1.4.1 2026-10-30: text edit for publication: wording tidied and process-only notes removed. No design decision, test rule, number or result changed. The original text is in git history.
 - v1.4 2026-10-26: gate version 4 after the P5 gated FAIL (hold-out H-R02, evals/RESULTS.md 2026-10-26) and the R3 blind-spot red team (report kept outside this repository). Kristian approved R3 findings 1-9, the H-R02 fix and gate v4. Section 5: 9 new visible cases (U 7, A 8, T 8, R 9; 76 in all), hold-out about 33. Details: evals/eval_config.yaml v4 and tests/CASES.md. No expected value of an existing visible case changed.
 - v1.3 2026-10-20: R1 red team of the gate applied as gate version 2 (report kept outside this repository). Kristian approved R1 findings 2, 3, 4, 5 and 11 (test changes) on 2026-10-20. Test changes in tests/CASES.md sections 3.14 (H4), 5.2 and 6, evals/eval_config.yaml v2 and tests/make_cases.py checks. Build notes: P2 probe items in section 6 (R1 findings 1, 6, 7, and the 4 custom properties), the data line in section 3 (13), the `shop_currency` fallback in the stack line (1); clarifying sentences in CASES.md (6, 8, 9, 10, 14, 16, 17). No expected value of any visible case changed.
 - v1.2 2026-10-20: Kristian's approval ("approved."): decisions 1-4 locked; LOCKED.

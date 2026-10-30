@@ -4,11 +4,9 @@
 # cases and expected results, grading, level, runs. A change applies
 # only to the next version, by a new dated version of this file and a note in
 # evals/RESULTS.md; the old version stays in git history.
-# Text edit 2026-10-30 (Kristian's instruction, for publication): internal
-# reference labels, the word "owner" and a process note that does not
-# help a reader were removed from comments and text values, and quoted
-# words became summaries; no case, expected result, grading, level or run changed,
-# so the gate version stays 4. The original text is in git history.
+# Text edit 2026-10-30, for publication: wording tidied and one process-only
+# note removed; no case, expected result, grading, level or run changed, so
+# the gate version stays 4. The original text is in git history.
 version: 4
 date: 2026-10-26
 plan: "BLUEPRINT.md v1.4 (LOCKED 2026-10-20; v1.3 records the R1 changes, v1.4 gate v4), section 5"
@@ -54,7 +52,7 @@ changes:
     date: 2026-10-20
     commit: 849b93e
 rules: tests/CASES.md
-procedure: "the author's private test procedure; not part of this repository; the rules that apply are written out in this file and in tests/CASES.md"
+procedure: "the author's own test procedure, not part of this repository; the rules that apply are written out in this file and in tests/CASES.md"
 
 eval_level:
   proposed: "Critical (writes customer and order records into the CRM with no person checking each write; deal amounts feed sales reports)"
