@@ -3,7 +3,7 @@
 n8n data sync with checks: a WooCommerce order webhook goes through field and duplicate checks to a HubSpot contact and deal; failed orders go to a needs-attention list with a Slack alert and a replay step; a daily summary goes to Slack. Portfolio demo with invented data.
 
 **Classification:** PROJECT (portfolio demo)
-**Status:** Complete v0.4 (2026-10-28). Private on GitHub. The publish gate passed on f98bad5; it runs again on the commit that will be public.
+**Status:** Complete v0.5 (2026-10-30). Public on GitHub since 2026-10-30 (publish gate PASS on f7dee9b). Keyless checks run in CI on Linux, macOS and Windows.
 **Plan:** BLUEPRINT.md v1.4, LOCKED 2026-10-20 (eval level Standard; decisions 1-7). Done = the five quality-bar items in BLUEPRINT.md section 6.
 **Limits:** README.md, section "Limits".
 **Open decisions:** none.
@@ -26,7 +26,7 @@ n8n data sync with checks: a WooCommerce order webhook goes through field and du
 - 2026-10-22: the SW02 fix (the ledger is read again after each retry wait).
 - 2026-10-25: SW03 option A (keep `needs_attention`) and gate v3: one retry on HubSpot's 404 `OBJECT_NOT_FOUND` for a contact upsert (CASES.md 3.7).
 - 2026-10-28: adr/001 (currency in `shop_currency`), adr/002 (`closedate` in every deal upsert) and adr/003 (order webhook v1 with "Binary File" on) Accepted.
-- 2026-10-30: the check that the system runs on 3 operating systems is N/A for this repository (no keyless run path is advertised).
+- 2026-10-30: the keyless checks run in CI on Linux, macOS and Windows; the full test series stays local (it needs n8n, HubSpot and Slack).
 
 ## Version 2 list
 
@@ -45,6 +45,9 @@ Not breaks of the hard rules H1-H5 and not v1 bugs (decision 4):
 ## Change Log
 *(New entries on top. Phase closes require evidence: exit codes, commit hashes, eval numbers. Entries before 2026-10-30 are in the git history of this file.)*
 
+- **2026-10-30 (public release and CI)**
+  - Repository made public on 2026-10-30. Checked without login: page and API answer 200, a fresh clone is at f7dee9b, and the keyless checks pass in that clone.
+  - CI workflow `tests` (9c8f3da): the keyless checks on Linux, macOS and Windows with Python 3.12 and Node 24. Run 41019469286 green on all three at the first attempt: 76 visible and 17 sweep cases OK; 12 workflow files, 0 findings; `tests/score.py` GATE PASS (110 of 110 in each of gated-4..6); the rebuild gives the committed files (visible SHA-256 ea488c9d..., sweep e78351bd...). The publish scan of 9c8f3da exited with code 0.
 - **2026-10-30 (publication preparation)**
   - Documents tidied for publication (wording tidied, process-only notes removed); this file is now a short status file. No workflow, test case, number or result changed: `python workflows/build.py` rebuilds `workflows/test/` and `workflows/live/` byte for byte unchanged, and `python tests/make_cases.py` and `python tests/make_sweep.py` rewrite `tests/cases/visible.json` (SHA-256 ea488c9d...) and `tests/cases/sweep.json` (e78351bd...) unchanged. The earlier text is in git history.
   - Checks on Windows, all exit 0: the 3 unit tests (`tests/test_make_cases.py`, `tests/test_make_sweep.py`, `tests/test_sync_js.py`); `tests/score.py` on gated-4..6: GATE PASS; `tests/check_execute_once.py`: 0 findings; `tests/check_workflows_gate.py`: PASS; `.githooks/validate_artifacts.py`: PASS.
