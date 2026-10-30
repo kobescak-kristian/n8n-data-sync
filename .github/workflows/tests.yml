@@ -1,0 +1,49 @@
+# Keyless checks on Linux, macOS and Windows: the test-case and sweep checks,
+# the workflows' own Code-node checks (run in Node), the static workflow
+# checks, the gate result re-derived from the committed result files, and a
+# rebuild of the workflows and test cases that must give the committed files.
+# No n8n, no network, no keys. The full test series needs n8n plus HubSpot and
+# Slack accounts and is not run here.
+# Actions are pinned to full commit SHAs (the tag in the comment).
+name: tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: Test-case and sweep checks stop on planted mistakes
+        run: |
+          python tests/test_make_cases.py
+          python tests/test_make_sweep.py
+      - name: The workflows' Code-node checks agree with the reference model
+        run: python tests/test_sync_js.py
+      - name: Static workflow checks
+        run: |
+          python tests/check_execute_once.py
+          python tests/check_workflows_gate.py
+      - name: Gate result re-derived from the committed result files
+        run: python tests/score.py tests/results/gated-4.json tests/results/gated-5.json tests/results/gated-6.json
+      - name: Rebuild the workflows and test cases; the committed files must not change
+        run: |
+          python workflows/build.py
+          python tests/make_cases.py
+          python tests/make_sweep.py
+          git -c core.autocrlf=true diff --exit-code -- workflows tests/cases
