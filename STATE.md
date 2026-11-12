@@ -5,7 +5,7 @@
 
 ## Status
 
-v0.5. Plan and done criteria: BLUEPRINT.md. Changes: README.md, Version Log.
+v0.5. Changes: README.md, Version Log.
 
 ## Latest result
 
