@@ -8,13 +8,15 @@ to, never this file.
 
 An n8n workflow that syncs shop orders into a CRM (HubSpot): it checks every field, never creates a duplicate contact or order, never overwrites good data with blanks or older data, sends every failed order to a needs-attention list with a Slack alert and a replay step, and posts a daily summary. Human overview: `README.md`.
 
+Classification: PROJECT.
+
 ## Authority and conflict handling
 
 | Question | Canonical source |
 |---|---|
 | What the system is and claims | `README.md` |
 | Why a design decision was made | `adr/` |
-| Build status, open decisions, change history | `STATE.md` |
+| Current status, latest result (verdict and pointer), open items | `STATE.md` |
 | What the implementation actually does | source, tests and configuration inspected together |
 
 When sources disagree: an adopted ADR outranks the text it amends;
@@ -45,6 +47,9 @@ Starting points, not exhaustive reading lists.
 - No secrets or machine-local absolute paths in tracked files.
 - Never rewrite git history.
 - This file is an instruction surface, not a security boundary.
+- The `STATE.md` sections that older files cite (P1 entry, P6 to-do,
+  phases, decisions, change log) are at `git show 2b05dbc:STATE.md`
+  and `git show e8d07c6:STATE.md`.
 
 ## Verification
 
