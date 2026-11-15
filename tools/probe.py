@@ -1,4 +1,4 @@
-"""P2 first-hour probe (BLUEPRINT section 6, P2 row).
+"""P2 first-hour probe (build plan, P2 row).
 
 Runs every P2 check against the HubSpot "Portfolio Demo" account and the
 shared local n8n, prints one PASS/FAIL line per check and exits 0 only when

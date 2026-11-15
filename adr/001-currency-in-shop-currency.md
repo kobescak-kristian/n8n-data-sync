@@ -12,7 +12,7 @@ The test cases expect the deal currency exactly as the shop sends it: `EUR`,
 and M04 USD). CASES.md 3.4 mapped it to HubSpot's own `deal_currency_code`,
 "confirm in P2". R1 finding 1 warned that HubSpot rejects a
 `deal_currency_code` the account has not set up, and that a free account has
-one currency. BLUEPRINT v1.3 (stack line and P2 row) and CASES.md section 1
+one currency. The build plan (v1.3, stack line and P2 row) and CASES.md section 1
 already say: if P2 confirms one currency, `currency` maps to a custom text deal
 property `shop_currency`, by ADR; the expected values in the cases do not
 change.
@@ -39,8 +39,8 @@ The logical field `currency` is written to the custom text deal property
   and ends `crm_bad_request` in needs-attention; a correct build would fail
   N04 (GBP) and every EUR case, which is most of the set.
 - **Add EUR and GBP as currencies in the account.** Rejected: more than one
-  currency needs a paid HubSpot tier; the build budget is $0 (BLUEPRINT
-  section 0) and the demo account is shared with another demo build.
+  currency needs a paid HubSpot tier; the build budget is $0
+  (build plan) and the demo account is shared with another demo build.
 - **Convert amounts to the account currency.** Rejected: guessing an exchange
   rate changes money values; CASES.md 3.3 forbids any change of totals.
 - **Send both (`deal_currency_code` only when it is USD).** Rejected: two

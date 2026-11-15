@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Keyless check of n8n workflow JSON files.
 
-Named by the "Entry points" line of the build's blueprint template; it
+Named by the "Entry points" line of the build plan template; it
 checks webhook auth, the error workflow and that no credential value is
 in the JSON.
 A shared checker.
