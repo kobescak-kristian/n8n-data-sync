@@ -13,7 +13,7 @@ section 1). The entry must check the signature on those exact bytes and
 compare in constant time (CASES.md 3.1 step 3). A signed body that is not
 JSON must still get HTTP 200 and go to needs-attention with reason
 `not_json` (CASES.md 3.1 step 5; visible case A06 sends it with
-`Content-Type: application/json`). BLUEPRINT section 4 names the P2 risk "n8n
+`Content-Type: application/json`). The build plan names the P2 risk "n8n
 webhook cannot give the raw body for the signature check" with the fallback
 "the signature check in a Code node on the binary body".
 
